@@ -195,15 +195,9 @@ extern bool initcall_debug;
   #define __lto_initcall(c, l, fn, id, __sec) \
 	___lto_initcall(c, l, fn, id, __sec)
 
-  #define ___define_initcall(fn, id, __sec) \
-	__lto_initcall(__COUNTER__, __LINE__, fn, id, __sec)
-#else
-  #define ___define_initcall(fn, id, __sec) \
-	static initcall_t __initcall_##fn##id __used __noreorder \
-		__attribute__((__section__(#__sec ".init"))) = fn;
-#endif
-
-#define __define_initcall(fn, id) ___define_initcall(fn, id, .initcall##id)
+#define __define_initcall(fn, id) \
+	static initcall_t __initcall_name(fn, id) __used __noreorder \
+	__attribute__((__section__(".initcall" #id ".init"))) = fn;
 
 /*
  * Early initcalls run before initializing SMP.
