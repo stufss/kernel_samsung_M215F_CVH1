@@ -736,6 +736,7 @@ config LTO_GCC
 	  For more information see Documentation/lto-build
 endchoice
 
+
 config LTO_DEBUG
 	bool "Enable LTO compile time debugging"
 	depends on LTO_GCC

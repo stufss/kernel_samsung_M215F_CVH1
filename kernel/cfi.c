@@ -24,12 +24,21 @@
 #define cfi_slowpath_handler	__cfi_slowpath
 #endif /* CONFIG_CFI_PERMISSIVE */
 
+<<<<<<< HEAD
 static inline void handle_cfi_failure(void *ptr)
 {
 #ifdef CONFIG_CFI_PERMISSIVE
 	WARN_RATELIMIT(1, "CFI failure (target: [<%px>] %pF):\n", ptr, ptr);
 #else
 	pr_err("CFI failure (target: [<%px>] %pF):\n", ptr, ptr);
+=======
+static inline void handle_cfi_failure()
+{
+#ifdef CONFIG_CFI_PERMISSIVE
+	WARN_RATELIMIT(1, "CFI failure:\n");
+#else
+	pr_err("CFI failure:\n");
+>>>>>>> d590fd127d47 (ANDROID: add support for clang Control Flow Integrity (CFI))
 	BUG();
 #endif
 }
@@ -88,6 +97,7 @@ static inline unsigned long shadow_to_ptr(const struct cfi_shadow *s,
 	return (s->r.min_page + s->shadow[index]) << PAGE_SHIFT;
 }
 
+<<<<<<< HEAD
 static inline unsigned long shadow_to_page(const struct cfi_shadow *s,
 	int index)
 {
@@ -96,6 +106,8 @@ static inline unsigned long shadow_to_page(const struct cfi_shadow *s,
 	return (s->r.min_page + index) << PAGE_SHIFT;
 }
 
+=======
+>>>>>>> d590fd127d47 (ANDROID: add support for clang Control Flow Integrity (CFI))
 static void prepare_next_shadow(const struct cfi_shadow __rcu *prev,
 		struct cfi_shadow *next)
 {
@@ -118,7 +130,11 @@ static void prepare_next_shadow(const struct cfi_shadow __rcu *prev,
 		if (prev->shadow[i] == SHADOW_INVALID)
 			continue;
 
+<<<<<<< HEAD
 		index = ptr_to_shadow(next, shadow_to_page(prev, i));
+=======
+		index = ptr_to_shadow(next, shadow_to_ptr(prev, i));
+>>>>>>> d590fd127d47 (ANDROID: add support for clang Control Flow Integrity (CFI))
 		if (index < 0)
 			continue;
 
@@ -291,11 +307,16 @@ void cfi_slowpath_handler(uint64_t id, void *ptr, void *diag)
 	if (likely(check))
 		check(id, ptr, diag);
 	else /* Don't allow unchecked modules */
+<<<<<<< HEAD
 		handle_cfi_failure(ptr);
+=======
+		handle_cfi_failure();
+>>>>>>> d590fd127d47 (ANDROID: add support for clang Control Flow Integrity (CFI))
 }
 EXPORT_SYMBOL(cfi_slowpath_handler);
 #endif /* CONFIG_MODULES */
 
+<<<<<<< HEAD
 void cfi_failure_handler(void *data, void *ptr, void *vtable)
 {
 	handle_cfi_failure(ptr);
@@ -305,4 +326,15 @@ EXPORT_SYMBOL(cfi_failure_handler);
 void __cfi_check_fail(void *data, void *ptr)
 {
 	handle_cfi_failure(ptr);
+=======
+void cfi_failure_handler(void *data, void *value, void *vtable)
+{
+	handle_cfi_failure();
+}
+EXPORT_SYMBOL(cfi_failure_handler);
+
+void __cfi_check_fail(void *data, void *value)
+{
+	handle_cfi_failure();
+>>>>>>> d590fd127d47 (ANDROID: add support for clang Control Flow Integrity (CFI))
 }
