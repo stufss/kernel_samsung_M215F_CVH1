@@ -363,8 +363,6 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 {
 	const char *end = src + BPF_OBJ_NAME_LEN;
 
-	memset(dst, 0, BPF_OBJ_NAME_LEN);
-
 	/* Copy all isalnum() and '_' char */
 	while (src < end && *src) {
 		if (!isalnum(*src) && *src != '_')
@@ -376,10 +374,13 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 	if (src == end)
 		return -EINVAL;
 
+	/* '\0' terminates dst */
+	*dst = 0;
+
 	return 0;
 }
 
-#define BPF_MAP_CREATE_LAST_FIELD map_name
+#define BPF_MAP_CREATE_LAST_FIELD numa_node
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
 {
