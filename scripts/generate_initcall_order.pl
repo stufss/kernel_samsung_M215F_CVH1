@@ -41,7 +41,11 @@ sub find_initcalls {
 
 	die "$0: object file $object doesn't exist?" if (! -f $object);
 
+<<<<<<< HEAD
 	open(my $fh, "\"$nm\" --just-symbol-name --defined-only \"$object\" 2>/dev/null |")
+=======
+	open(my $fh, "\"$nm\" -just-symbol-name -defined-only \"$object\" 2>/dev/null |")
+>>>>>>> 3bf9a7b13270 (ANDROID: init: ensure initcall ordering with LTO)
 		or die "$0: failed to execute \"$nm\": $!";
 
 	my $initcalls = {};
