@@ -234,7 +234,7 @@ static bool sugov_up_down_rate_limit(struct sugov_policy *sg_policy, u64 time,
 static int sugov_select_scaling_cpu(void)
 {
 	int cpu, candidate = -1;
-	unsigned long rt, util, min = INT_MAX;
+	unsigned long util, min = INT_MAX;
 	cpumask_t mask;
 
 	cpumask_clear(&mask);
