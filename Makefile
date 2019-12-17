@@ -652,6 +652,8 @@ ifeq ($(dot-config),1)
 -include include/config/auto.conf
 
 ifeq ($(KBUILD_EXTMOD),)
+include/config/auto.conf.cmd: check-clang-specific-options
+
 # Read in dependencies to all Kconfig* files, make sure to run
 # oldconfig if changes are detected.
 -include include/config/auto.conf.cmd
@@ -1380,6 +1382,22 @@ ifneq ($(findstring y,$(shell $(CONFIG_SHELL) \
 	@echo WARNING: Disabling gcc-specific options with $(cc-name) >&2
 	$(Q)$(srctree)/scripts/config --file $(KCONFIG_CONFIG) \
 		$(foreach c,$(gcc-specific-configs),-d $(c)) && \
+        $(MAKE) -f $(srctree)/Makefile olddefconfig
+endif
+endif
+
+# Disable clang-specific config options when using a different compiler
+clang-specific-configs := LTO_CLANG CFI_CLANG SHADOW_CALL_STACK
+
+PHONY += check-clang-specific-options
+check-clang-specific-options: $(KCONFIG_CONFIG) FORCE
+ifneq ($(cc-name),clang)
+ifneq ($(findstring y,$(shell $(CONFIG_SHELL) \
+	$(srctree)/scripts/config --file $(KCONFIG_CONFIG) \
+		$(foreach c,$(clang-specific-configs),-s $(c)))),)
+	@echo WARNING: Disabling clang-specific options with $(cc-name) >&2
+	$(Q)$(srctree)/scripts/config --file $(KCONFIG_CONFIG) \
+		$(foreach c,$(clang-specific-configs),-d $(c)) && \
 	$(MAKE) -f $(srctree)/Makefile olddefconfig
 endif
 endif
