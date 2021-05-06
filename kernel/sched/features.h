@@ -17,7 +17,7 @@
  * wakeup-preemption), since its likely going to consume data we
  * touched, increases cache locality.
  */
-#define SCHED_FEAT_NEXT_BUDDY 0
+#define SCHED_FEAT_NEXT_BUDDY 1
 
 /*
  * Prefer to schedule the task that ran last (when we did
@@ -44,7 +44,8 @@
 /*
  * Decrement CPU capacity based on time not spent running tasks
  */
-#define SCHED_FEAT_NONTASK_CAPACITY 1
+#define SCHED_FEAT_NONTASK_CAPACITY 0
+
 
 /*
  * Queue remote wakeups on the target CPU and process them
@@ -76,9 +77,11 @@
  * it should go may be a better scenario.
  */
 #define SCHED_FEAT_RT_PUSH_IPI 1
+#else
+#define SCHED_FEAT_RT_PUSH_IPI 0
 #endif
 
-#define SCHED_FEAT_RT_RUNTIME_SHARE 1
+#define SCHED_FEAT_RT_RUNTIME_SHARE 0
 #define SCHED_FEAT_LB_MIN 0
 #define SCHED_FEAT_ATTACH_AGE_LOAD 1
 
@@ -90,6 +93,8 @@
  * UtilEstimation. Use estimated CPU utilization.
  */
 #define SCHED_FEAT_UTIL_EST 1
+#define SCHED_FEAT_UTIL_EST_FASTUP 1
+
 
 /*
  * Energy aware scheduling. Use platform energy model to guide scheduling
