@@ -92,6 +92,10 @@
 #include <linux/thread_info.h>
 #include <linux/cpufreq_times.h>
 
+#ifdef CONFIG_SCHED_EMS
+#include <linux/ems.h>
+#endif
+
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
 #include <linux/uaccess.h>

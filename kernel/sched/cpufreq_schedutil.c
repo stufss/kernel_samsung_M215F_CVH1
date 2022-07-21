@@ -30,7 +30,6 @@ struct sugov_tunables {
 	struct gov_attr_set attr_set;
 	unsigned int up_rate_limit_us;
 	unsigned int down_rate_limit_us;
-};
 
 struct sugov_policy {
 	struct cpufreq_policy *policy;
@@ -285,15 +284,6 @@ static void sugov_update_commit(struct sugov_policy *sg_policy, u64 time,
 	}
 }
 
-#ifdef CONFIG_FREQVAR_TUNE
-unsigned int freqvar_tipping_point(int cpu, unsigned int freq);
-#else
-static inline unsigned int freqvar_tipping_point(int cpu, unsigned int freq)
-{
-	return  freq + (freq >> 2);
-}
-#endif
-
 /**
  * get_next_freq - Compute a new frequency for a given cpufreq policy.
  * @sg_policy: schedutil policy object to compute the new frequency for.
@@ -344,9 +334,6 @@ static void sugov_get_util(unsigned long *util, unsigned long *max, int cpu)
 	max_cap = arch_scale_cpu_capacity(NULL, cpu);
 
 	*util = boosted_cpu_util(cpu);
-	*util = min(*util, max_cap);
-	*max = max_cap;
-
 #ifdef CONFIG_UCLAMP_TASK
    	*util = uclamp_util_with(rq, *util, NULL);
 #endif	
@@ -1000,7 +987,7 @@ static void sugov_stop_slack(int cpu)
 
 static s64 get_next_event_time_ms(unsigned int cpu)
 {
-	return ktime_to_us(ktime_sub(*(get_next_event_cpu(cpu)), ktime_get()));
+	return ktime_to_ms(ktime_sub(*(get_next_event_cpu(cpu)), ktime_get()));
 }
 
 static int sugov_need_slack_timer(unsigned int cpu)
