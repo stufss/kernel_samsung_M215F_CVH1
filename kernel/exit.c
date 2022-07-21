@@ -63,7 +63,6 @@
 #include <linux/rcuwait.h>
 #include <linux/compat.h>
 #include <linux/cpufreq_times.h>
-#include <linux/ems.h>
 
 #include <linux/uaccess.h>
 #include <asm/unistd.h>
@@ -825,7 +824,6 @@ void __noreturn do_exit(long code)
 	}
 
 	exit_signals(tsk);  /* sets PF_EXITING */
-	sync_band(tsk, LEAVE_BAND);
 
 	if (unlikely(in_atomic())) {
 		pr_info("note: %s[%d] exited with preempt_count %d\n",
