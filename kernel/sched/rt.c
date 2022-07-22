@@ -1892,16 +1892,7 @@ static void yield_task_rt(struct rq *rq)
 }
 
 #ifdef CONFIG_SMP
-
-/* TODO:
- * attach/detach/migrate_task_rt_rq() for load tracking
- */
-
-#ifdef CONFIG_SCHED_USE_FLUID_RT
-static int find_lowest_rq(struct task_struct *task, int wake_flags);
-#else
 static int find_lowest_rq(struct task_struct *task);
-#endif
 static int
 select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 		  int sibling_count_hint)
@@ -1920,7 +1911,7 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 
 #ifdef CONFIG_SCHED_USE_FLUID_RT
 	if (curr) {
-		int target = find_lowest_rq(p, flags);
+		int target = find_lowest_rq(p);
 		/*
 		 * Even though the destination CPU is running
 		 * a higher priority task, FluidRT can bother moving it
@@ -1976,8 +1967,10 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 
 out:
 #ifdef CONFIG_SCHED_USE_FLUID_RT
-	if (cpu >= 6)
-		trace_sched_fluid_stat(p, &p->rt.avg, cpu, "BIG_ASSIGED");
+	if (!is_slowest_cpu(cpu))
+		trace_sched_fluid_stat(p, &p->rt.avg, cpu, "FAST_ASSIGED");
+	else
+		trace_sched_fluid_stat(p, &p->rt.avg, cpu, "SLOW_ASSIGED");
 #endif
 	return cpu;
 }
@@ -2551,46 +2544,6 @@ static inline int weight_from_rtprio(int prio)
 		return ((rtprio_to_weight[idx] + rtprio_to_weight[idx+1]) >> 1);
 }
 
-/* Affordable CPU:
- * to find the best CPU in which the data is kept in cache-hot
- *
- * In most of time, RT task is invoked because,
- *  Case - I : it is already scheduled some time ago, or
- *  Case - II: it is requested by some task without timedelay
- *
- * In case-I, it's hardly to find the best CPU in cache-hot if the time is relatively long.
- * But in case-II, waker CPU is likely to keep the cache-hot data useful to wakee RT task.
- */
-static inline int affordable_cpu(int cpu, unsigned long task_load)
-{
-	/*
-	 * If the task.state is 'TASK_INTERRUPTIBLE',
-	 * she is likely to call 'schedule()' explicitely, for waking up RT task.
-	 *   and have something in common with it.
-	 */
-	if (cpu_curr(cpu)->state != TASK_INTERRUPTIBLE)
-		return 0;
-
-	/*
-	 * Waker CPU must accommodate the target RT task.
-	 */
-	if (capacity_of(cpu) <= task_load)
-		return 0;
-
-	/*
-	 * Future work (More concerns if needed):
-	 * - Min opportunity cost between the eviction of tasks and dismiss of target RT
-	 *	: If evicted tasks are expecting too many damage for its execution,
-	 *		Target RT should not be this CPU.
-	 *	load(RT) >= Capa(CPU)/3 && load(evicted tasks) >= Capa(CPU)/3
-	 * - Identifying the relation:
-	 *	: Is it possible to identify the relation (such as mutex owner and waiter)
-	 * -
-	 */
-
-	return 1;
-}
-
 extern unsigned long task_util(struct task_struct *p);
 unsigned long frt_cpu_util_wake(int cpu, struct task_struct *p)
 {
@@ -2689,30 +2642,7 @@ static int find_victim_rt_rq(struct task_struct *task, const struct cpumask *sg_
 
 }
 
-static int check_cache_hot(struct task_struct *task, int flags, int *best_cpu)
-{
-	int cpu = smp_processor_id();
-	return false;
-	/*
-	 * 3. Cache hot : packing the callee and caller,
-	 *	when there is nothing to run except callee, or
-	 *	wake_flags are set.
-	 */
-	/* FUTURE WORK: Hierarchical cache hot */
-	if (!(flags & WF_SYNC))
-		return false;
-
-	if (cpumask_test_cpu(*best_cpu, cpu_coregroup_mask(cpu))) {
-		task->rt.sync_flag = 1;
-		*best_cpu = cpu;
-		trace_sched_fluid_stat(task, &task->rt.avg, *best_cpu, "CACHE-HOT");
-		return true;
-	}
-
-	return false;
-}
-
-static int find_idle_cpu(struct task_struct *task, int wake_flags)
+static int find_idle_cpu(struct task_struct *task)
 {
 	int cpu, best_cpu = -1;
 	int cpu_prio, max_prio = -1;
@@ -2747,8 +2677,9 @@ static int find_idle_cpu(struct task_struct *task, int wake_flags)
 			if (cpu_load > capacity_orig_of(cpu))
 				continue;
 
-			if ((cpu_prio > max_prio) || (cpu_load < min_load) ||
-					(cpu_load == min_load && task_cpu(task) == cpu)) {
+			if ((cpu_prio > max_prio)
+				|| (cpu_load < min_load)
+				|| (cpu_load == min_load && task_cpu(task) == cpu)) {
 				min_load = cpu_load;
 				max_prio = cpu_prio;
 				best_cpu = cpu;
@@ -2756,9 +2687,6 @@ static int find_idle_cpu(struct task_struct *task, int wake_flags)
 		}
 
 		if (cpu_selected(best_cpu)) {
-			if (check_cache_hot(task, wake_flags, &best_cpu))
-				return best_cpu;
-
 			trace_sched_fluid_stat(task, &task->rt.avg, best_cpu, "IDLE-FIRST");
 			return best_cpu;
 		}
@@ -2769,7 +2697,7 @@ static int find_idle_cpu(struct task_struct *task, int wake_flags)
 	return best_cpu;
 }
 
-static int find_recessive_cpu(struct task_struct *task, int wake_flags)
+static int find_recessive_cpu(struct task_struct *task)
 {
 	int cpu, best_cpu = -1;
 	u64 cpu_load, min_load = ULLONG_MAX;
@@ -2812,9 +2740,6 @@ static int find_recessive_cpu(struct task_struct *task, int wake_flags)
 		}
 
 		if (cpu_selected(best_cpu)) {
-			if (check_cache_hot(task, wake_flags, &best_cpu))
-				return best_cpu;
-
 			trace_sched_fluid_stat(task, &task->rt.avg, best_cpu,
 				rt_task(cpu_rq(best_cpu)->curr) ? "RT-RECESS" : "FAIR-RECESS");
 			return best_cpu;
@@ -2826,7 +2751,7 @@ static int find_recessive_cpu(struct task_struct *task, int wake_flags)
 	return best_cpu;
 }
 
-static int find_lowest_rq_fluid(struct task_struct *task, int wake_flags)
+static int find_lowest_rq_fluid(struct task_struct *task)
 {
 	bool prefer_perf = schedtune_prefer_perf(task) > 0;
 	int cpu, best_cpu = -1;
@@ -2846,12 +2771,12 @@ static int find_lowest_rq_fluid(struct task_struct *task, int wake_flags)
 	 */
 
 	/* 1. idle CPU selection */
-	best_cpu = find_idle_cpu(task, wake_flags);
+	best_cpu = find_idle_cpu(task);
 	if (cpu_selected(best_cpu))
 		goto out;
 
 	/* 2. recessive task first */
-	best_cpu = find_recessive_cpu(task, wake_flags);
+	best_cpu = find_recessive_cpu(task);
 	if (cpu_selected(best_cpu))
 		goto out;
 
@@ -2869,7 +2794,7 @@ static int find_lowest_rq_fluid(struct task_struct *task, int wake_flags)
 			break;
 	}
 out:
-	if (best_cpu == -1)
+	if (!cpu_selected(best_cpu))
 		best_cpu = task_rq(task)->cpu;
 
 	if (!cpumask_test_cpu(best_cpu, cpu_online_mask)) {
@@ -2881,14 +2806,10 @@ out:
 }
 #endif /* CONFIG_SCHED_USE_FLUID_RT */
 
-#ifdef CONFIG_SCHED_USE_FLUID_RT
-static int find_lowest_rq(struct task_struct *task, int wake_flags)
-#else
 static int find_lowest_rq(struct task_struct *task)
-#endif
 {
 #ifdef CONFIG_SCHED_USE_FLUID_RT
-	return find_lowest_rq_fluid(task, wake_flags);
+	return find_lowest_rq_fluid(task);
 #else
 	struct sched_domain *sd;
 	struct cpumask *lowest_mask = this_cpu_cpumask_var_ptr(local_cpu_mask);
@@ -2971,11 +2892,7 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
 	int cpu;
 
 	for (tries = 0; tries < RT_MAX_TRIES; tries++) {
-#ifdef CONFIG_SCHED_USE_FLUID_RT
-		cpu = find_lowest_rq(task, 0);
-#else
 		cpu = find_lowest_rq(task);
-#endif
 		if ((cpu == -1) || (cpu == rq->cpu))
 			break;
 
