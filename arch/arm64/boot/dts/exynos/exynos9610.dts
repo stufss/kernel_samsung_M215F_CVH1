@@ -2944,6 +2944,9 @@
 				power-coefficient = <0x1c2>;
 				linux,phandle = <0x21>;
 				phandle = <0x21>;
+
+				capacity-weight = <0x1>;
+				energy-weight = <0x1>;
 			};
 
 			a73-energy {
@@ -2951,6 +2954,9 @@
 				power-coefficient = <0x366>;
 				linux,phandle = <0x23>;
 				phandle = <0x23>;
+
+				capacity-weight = <0x2>;
+				energy-weight = <0x1>;
 			};
 		};
 
@@ -2960,14 +2966,12 @@
 
 				coregroup0 {
 					lower-boundary = <0x0>;
-					upper-boundary = <0x44>;
-					coverage-ratio = <0x64>;
+					upper-boundary = <0x3C>;
 				};
 
 				coregroup1 {
-					lower-boundary = <0x11>;
+					lower-boundary = <0x14>;
 					upper-boundary = <0x64>;
-					coverage-ratio = <0x4b>;
 				};
 			};
 
@@ -2987,23 +2991,72 @@
 			frt {
 
 				coregroup0 {
-					coverage-ratio = <0x1e>;
-					active-ratio = <0x19>;
+					active-ratio = <0x14>;
 				};
 
 				coregroup1 {
-					coverage-ratio = <0xf>;
-					active-ratio = <0x5>;
+					active-ratio = <0xA>;
 				};
 			};
 
-			prefer-perf-service {
-
-				prefer-perf0 {
-					boost = <0x1>;
-					light-task-threshold = <0x0>;
-					prefer-cpus = "4-7", "0-3";
+			mlt {
+				/* little cores */
+				coregroup0 {
+					active-ratio-limit = <0x22>;
+					active-ratio-boost = <0x24>;
 				};
+				/* big cores */
+				coregroup1 {
+					active-ratio-limit = <0x10>;
+					active-ratio-boost = <0x12>;
+				};
+			};
+
+			sysbusy {
+				somac-ready-run = <1>;
+				somac-ready-cpus = "0-3";
+			};
+
+			prefer-cpu {
+				/* foreground */
+				prefer-cpu0 {
+					cgroup = <1>;
+
+					prefer-cpus = "2-7";
+
+					light-task-threshold = <0x25>;
+					light-prefer-cpus = "0-3";
+
+					heavy-task-threshold = <0x1CE>;
+					heavy-prefer-cpus = "4-7";
+				};
+
+				/* background */
+				prefer-cpu1 {
+					cgroup = <2>;
+
+					prefer-cpus = "0-3";
+
+					light-task-threshold = <0x54>;
+					light-prefer-cpus = "0-3";
+
+					heavy-task-threshold = <0x229>;
+					heavy-prefer-cpus = "4-7";
+				};
+
+				/* top-app */
+				prefer-cpu2 {
+					cgroup = <3>;
+
+					prefer-cpus = "4-7";
+
+					light-task-threshold = <0x4>;
+					light-prefer-cpus = "0-3";
+
+					heavy-task-threshold = <0x122>;
+					heavy-prefer-cpus = "4-7";
+				};
+
 			};
 		};
 	};
@@ -5902,28 +5955,49 @@
 		};
 	};
 
-	schedutil {
-
-		domain@0 {
-			device_type = "freqvar-tune";
+	adaptive_gov {
+		aigov_domain0: domain@0 {
+			device_type = "aigov-domain";
 			shared-cpus = "0-3";
-			boost_table = <0x0>;
-			up_rate_limit_table = <0x5>;
-			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x3c 0xde2b0 0x50>;
+			slack-enabled = <0x0>;          /* Disabled */
+			qos-min-class = <0x3>;
+		};
+
+		aigov_domain1: domain@1 {
+			device_type = "aigov-domain";
+			shared-cpus = "4-7";
+			slack-enabled = <0x1>;          /* Enabled */
+			slack-expired-time = <0x50>;    /* 80ms */
+			qos-min-class = <0x5>;
+		};
+	};
+
+	energy_adaptive {
+		domain@0 {
+			device_type = "ems-cpufreq";
+			shared-cpus = "0-3";
+
+			util-boost-table = < 0x9A 0xC4C70 0x90 0xDE2B0 0x88 0x101148 0x82 0x110F30 0x7C 0x12A570 0x74 0x143BB0 0x64 >;
+			up-rate-limit-table = < 0x4 >;
+			down-rate-limit-table = < 0x8 >;
+			tipping-point-scale = < 0x19 0x101148 0x14 0x176830 0xF >;
 		};
 
 		domain@1 {
-			device_type = "freqvar-tune";
+			device_type = "ems-cpufreq";
 			shared-cpus = "4-7";
-			boost_table = <0x0>;
-			up_rate_limit_table = <0x5>;
-			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x50>;
+
+			util-boost-table = < 0x94 0x1174C0 0x8C 0x130B00 0x86 0x14A140 0x7A 0x163780 0x70 0x1702A0 0x64 >;
+			up-rate-limit-table = < 0x4 >;
+			down-rate-limit-table = < 0x8 >;
+			tipping-point-scale = < 0x19 0x1702A0 0x14 >;
 		};
 	};
 
 	cpufreq-ufc {
+	        #define PM_QOS_MIN_LIMIT		0x0
+		    #define PM_QOS_MIN_WO_BOOST_LIMIT	0x1
+		    #define PM_QOS_MAX_LIMIT		0x2
 
 		domain@0 {
 			device_type = "cpufreq-userctrl";
@@ -5935,17 +6009,32 @@
 		domain@1 {
 			device_type = "cpufreq-userctrl";
 			shared-cpus = "4-7";
-			user-default-qos = <0xe4840>;
+
+			user-default-qos = <0xFDE80>;
 			user-boost = <0x1>;
 
 			min-limit {
-				ctrl-type = <0x0>;
-				table = <0x234f10 0x1a94b0 0x21b8d0 0xc4c70 0x215340 0xc4c70 0x1fbd00 0xc4c70 0x1e26c0 0xc4c70 0x1cf610 0xc4c70 0x1afa40 0xc4c70 0x196400 0xc4c70 0x1702a0 0xc4c70 0x163780 0xc4c70 0x14a140 0xc4c70 0x130b00 0xc4c70 0x1174c0 0xc4c70 0xfde80 0xc4c70 0xe4840 0xc4c70 0xcb200 0xc4c70 0xb1bc0 0xc4c70>;
+				ctrl-type = <PM_QOS_MIN_LIMIT>;
+				/* big 	lit */
+				table = <0x23A9C0 0xC9F80 0x21B7E0 0xC9F80
+                0x21A3C0 0xC9F80 0x202700 0xC9F80
+                0x1E93C0 0xC9F80 0x1D35C0 0xC9F80
+                0x1B99C0 0xC9F80 0x1A0000 0xC9F80
+                0x1702A0 0xC9F80 0x163780 0xC9F80
+                0x14A140 0xC9F80 0x130B00 0xC9F80
+                0x1174C0 0xC9F80 0x100000 0xC4C70>;
 			};
 
 			max-limit {
-				ctrl-type = <0x2>;
-				table = <0x234f10 0x1a94b0 0x21b8d0 0x1a94b0 0x215340 0x1a94b0 0x1fbd00 0x1a94b0 0x1e26c0 0x1a94b0 0x1cf610 0x18fe70 0x1afa40 0x18fe70 0x196400 0x176830 0x1702a0 0x176830 0x163780 0x163780 0x14a140 0x143bb0 0x130b00 0x12a570 0x1174c0 0x12a570 0xfde80 0x110f30 0xe4840 0x101148 0xcb200 0x101148 0xb1bc0 0x101148>;
+				ctrl-type = <PM_QOS_MAX_LIMIT>;
+				/* pmt 	ank */
+				table = <0x23A9C0 0x1A94B0 0x21B7E0 0x1A94B0
+                0x21A3C0 0x1A94B0 0x202700 0x1A94B0
+                0x1E93C0 0x1A94B0 0x1D35C0 0x196A40
+                0x1B99C0 0x196A40 0x1A0000 0x189A00
+                0x1702A0 0x189A00 0x163780 0x17A100
+                0x14A140 0x1592C0 0x130B00 0x14D410
+                0x1174C0 0x14D410 0x100000 0x11CC80>;
 			};
 		};
 	};
@@ -5969,9 +6058,15 @@
 			dm-constraints {
 
 				mif-perf {
-					const-type = <0x0>;
-					dm-type = <0x2>;
-					table = <0x1a94b0 0xf78f0 0x18fe70 0xf78f0 0x176830 0xf78f0 0x163780 0xf78f0 0x143bb0 0xce4c8 0x12a570 0xce4c8 0x110f30 0xce4c8 0x101148 0xce4c8 0xde2b0 0xa50a0 0xc4c70 0xa50a0 0xab630 0x854d0 0x91ff0 0x664b8 0x62638 0x664b8>;
+					const-type = <CONSTRAINT_MIN>;
+					dm-type = <DM_MIF>;
+						/*  cpu     mif  */
+					table = <0x1A94B0 0x3D70C0 0x196A40 0x3D70C0
+                    0x189A00 0x3D70C0 0x17A100 0x3D70C0
+                    0x1592C0 0xCE510 0x14D410 0xCE510
+                    0x11CC80 0xCE510 0x102A30 0xCE510
+                    0x16D680 0xAC4E00 0xC9F80 0xAC4E00
+                    0xAE1C0 0x22D60>;
 				};
 			};
 		};
@@ -5992,9 +6087,16 @@
 			dm-constraints {
 
 				mif-perf {
-					const-type = <0x0>;
-					dm-type = <0x2>;
-					table = <0x234f10 0x1fefc8 0x21b8d0 0x1fefc8 0x215340 0x1b5fd0 0x1fbd00 0x1b5fd0 0x1e26c0 0x1b5fd0 0x1cf610 0x1b5fd0 0x1afa40 0x177bb8 0x196400 0x177bb8 0x1702a0 0x177bb8 0x163780 0x14a140 0x14a140 0xf78f0 0x130b00 0xf78f0 0x1174c0 0xce4c8 0xfde80 0xa50a0 0xe4840 0x854d0 0xcb200 0x854d0 0xb1bc0 0x854d0>;
+					const-type = <CONSTRAINT_MIN>;
+					dm-type = <DM_MIF>;
+						/*  cpu     mif  */
+					table = <0x23A9C0 0x821C20 0x21B7E0 0x821C20
+                    0x21A3C0 0x6F8C80 0x202700 0x6F8C80
+                    0x1E93C0 0x6F8C80 0x1D35C0 0x6F8C80
+                    0x1B99C0 0x5E0190 0x1A0000 0x5E0190
+                    0x1702A0 0x5E0190 0x163780 0x53A800
+                    0x14A140 0x3D70C0 0x130B00 0x3D70C0
+                    0x1174C0 0xCE510 0x100000 0xAC4E00>;
 				};
 			};
 		};
