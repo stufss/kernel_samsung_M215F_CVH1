@@ -330,6 +330,7 @@ int sensor_gm2_cis_GGC_write(struct v4l2_subdev *subdev)
 #endif
 
 	if (cal_data[0] == 0xFF && cal_data[1] == 0x00) {
+		int i;
 		/* Big Endian */
 		start_addr = SENSOR_GM2_GGC_REG_ADDR;
 		data_size = SENSOR_GM2_GGC_CAL_SIZE - 2;
