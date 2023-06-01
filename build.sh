@@ -30,9 +30,16 @@ LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
 '
 
+if [ "$1" = "ksu" ]; then
+KSU=ksu.config
+ksu_status_on="_w/ksu"
+else
+ksu_status_on=""  
+fi
+
 make clean && make distclean
 clear
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
+make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config ${KSU}
 make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 echo "Cleaning Stuff"
@@ -72,6 +79,6 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "Zipping Stuff"
 cd AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}${ksu_status_on}.zip * -x .git README.md *placeholder
 cd ..
 echo "Ready to Flash"
