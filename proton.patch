@@ -1,0 +1,26 @@
+diff --git a/Makefile b/Makefile
+index c9016dca6..6e866c671 100755
+--- a/Makefile
++++ b/Makefile
+@@ -513,7 +513,7 @@ ifeq ($(shell $(srctree)/scripts/clang-android.sh $(CC) $(CLANG_FLAGS)), y)
+ $(error "Clang with Android --target detected. Did you specify CLANG_TRIPLE?")
+ endif
+ GCC_TOOLCHAIN_DIR := $(dir $(shell which $(CROSS_COMPILE)elfedit))
+-CLANG_FLAGS	+= --prefix=$(GCC_TOOLCHAIN_DIR)
++CLANG_FLAGS	+= --prefix=$(GCC_TOOLCHAIN_DIR)$(notdir $(CROSS_COMPILE))
+ GCC_TOOLCHAIN	:= $(realpath $(GCC_TOOLCHAIN_DIR)/..)
+ endif
+ ifneq ($(GCC_TOOLCHAIN),)
+@@ -707,6 +707,12 @@ ifdef CONFIG_PROFILE_ALL_BRANCHES
+ KBUILD_CFLAGS	+= -O2 $(call cc-disable-warning,maybe-uninitialized,)
+ else
+ KBUILD_CFLAGS   += -O2
++ifeq ($(cc-name),gcc)
++KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53
++endif
++ifeq ($(cc-name),clang)
++KBUILD_CFLAGS	+= -mcpu=cortex-a53 -mtune=cortex-a53
++endif
+ endif
+ endif
+ 
