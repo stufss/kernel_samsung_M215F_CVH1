@@ -19,7 +19,7 @@ index c9016dca6..6e866c671 100755
 +KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53
 +endif
 +ifeq ($(cc-name),clang)
-+KBUILD_CFLAGS	+= -mcpu=cortex-a53 -mtune=cortex-a53
++KBUILD_CFLAGS	+= -mcpu=cortex-a73 -mtune=cortex-a73
 +endif
  endif
  endif
