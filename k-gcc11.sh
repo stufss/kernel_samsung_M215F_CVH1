@@ -1,6 +1,6 @@
 make clean && make distclean
-export PATH=$HOME/android/toolchain/proton-clang-12/bin:$PATH
-export LD_LIBRARY_PATH="$HOME/android/toolchain/proton-clang-12/lib:$LD_LIBRARY_PATH"
+export PATH=$HOME/android/toolchain/proton-clang/bin:$PATH
+export LD_LIBRARY_PATH="$HOME/android/toolchain/proton-clang/lib:$LD_LIBRARY_PATH"
 export CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu-
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export CC=clang
@@ -22,8 +22,8 @@ export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
 
 
-make LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang-12/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_gcc_defconfig
-make LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang-12/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_gcc_defconfig
+make LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 echo "Cleaning Stuff"
 rm -rf AIK/Image

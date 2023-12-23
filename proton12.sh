@@ -1,7 +1,7 @@
 make clean && make distclean
 export PATH=$HOME/android/toolchain/proton-clang-12/bin:$PATH
 export LD_LIBRARY_PATH="$HOME/android/toolchain/proton-clang-12/lib:$LD_LIBRARY_PATH"
-export CROSS_COMPILE=$HOME/android/toolchain/gcc7/bin/aarch64-linux-gnu-
+export CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu-
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export CC=clang
 export LD=ld.lld
@@ -14,7 +14,7 @@ export OBJSIZE=llvm-size
 export STRIP=llvm-strip
 export LLVM_AR=llvm-ar
 export LLVM_DIS=llvm-dis
-
+export LLVM_NM=llvm-nm
 
 
 export ARCH=arm64
@@ -22,8 +22,8 @@ export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
 
 
-make CC=clang LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc7/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang-12/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_defconfig
-make CC=clang LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc7/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang-12/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make CC=clang LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang-12/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_defconfig
+make CC=clang LD=ld.lld ARCH=arm64 KCFLAGS=-w CROSS_COMPILE=$HOME/android/toolchain/gcc-12/bin/aarch64-linux-gnu- CLANG_TRIPLE=$HOME/android/toolchain/proton-clang-12/bin/aarch64-linux-gnu- AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j16
 
 echo "Cleaning Stuff"
 rm -rf AIK/Image
@@ -37,8 +37,8 @@ kver=$(make kernelversion)
 kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "Zipping Stuff"
 cd AIK
-rm -rf STOCK_KERNEL.*.zip
-zip -r1 STOCK_KERNEL.${kmod}_PROTON_CLANG_12_LATEST.zip * -x .git README.md *placeholder
+rm -rf N_KERNEL.*.zip
+zip -r1 N_KERNEL.${kmod}_PROTON_CLANG_12_LATEST.zip * -x .git README.md *placeholder
 cd ..
 echo "Ready to Flash"
 #export LDGOLD=$HOME/android/toolchain/google/sammy_clang_v8/gcc-cfp/gcc-cfp-jopp-only/aarch64-linux-android-4.9/bin/aarch64-linux-android-ld.gold
