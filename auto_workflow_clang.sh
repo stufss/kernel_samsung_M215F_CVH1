@@ -1,4 +1,3 @@
-make clean && make distclean
 export LD_LIBRARY_PATH="$PWD/toolchain/proton-clang/lib:$LD_LIBRARY_PATH"
 export CROSS_COMPILE=$PWD/toolchain/gcc/bin/aarch64-none-linux-gnu-
 export CLANG_TRIPLE=$PWD/toolchain/proton-clang/bin/aarch64-linux-gnu-
@@ -20,6 +19,7 @@ export ARCH=arm64
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
 
+make clean && make distclean
 
 make CC=clang LD=ld.lld ARCH=arm64 KCFLAGS=-w AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_defconfig
 make CC=clang LD=ld.lld ARCH=arm64 KCFLAGS=-w AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j16
