@@ -17,6 +17,7 @@ jobs:
       - name: Install packages & setup
         run: |
           sudo apt update
+          sudo apt purge firefox -y
           sudo apt upgrade
           sudo apt -y install wget lld python3
           bash init_clang_12.sh
