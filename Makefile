@@ -744,7 +744,16 @@ ifeq ($(cc-name),gcc)
 KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53
 endif
 ifeq ($(cc-name),clang)
-KBUILD_CFLAGS	+= -mcpu=cortex-a73 -mtune=cortex-a73
+KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
+                   -mcpu=cortex-a73+crypto+crc+sha2+aes \
+                   -mllvm -polly \
+		           -mllvm -polly-run-dce \
+		           -mllvm -polly-run-inliner \
+		           -mllvm -polly-opt-fusion=max \
+		           -mllvm -polly-ast-use-context \
+		           -mllvm -polly-detect-keep-going \
+		           -mllvm -polly-vectorizer=stripmine \
+		           -mllvm -polly-invariant-load-hoisting    
 endif
 endif
 endif
