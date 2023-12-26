@@ -1,4 +1,4 @@
-name: build
+name: build_GCC
 
 on:
 
@@ -21,6 +21,7 @@ jobs:
       - name: Run build
         run: |
           export PATH=$PWD/toolchain/proton-clang/bin:$PATH
+          export PATH=$PWD/toolchain/gcc/bin:$PATH
           bash auto_workflow_gcc.sh
 
       - name: Upload kernel
