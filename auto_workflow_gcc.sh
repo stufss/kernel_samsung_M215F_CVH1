@@ -12,7 +12,6 @@ export STRIP=llvm-strip
 export LLVM_AR=llvm-ar
 export LLVM_DIS=llvm-dis
 export LLVM_NM=llvm-nm
-export CC=gcc
 
 export ARCH=arm64
 export PLATFORM_VERSION=12
@@ -20,8 +19,8 @@ export ANDROID_MAJOR_VERSION=s
 
 make clean && make distclean
 
-make CC=gcc LD=ld.lld ARCH=arm64 KCFLAGS=-w AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_gcc_defconfig
-make CC=gcc LD=ld.lld ARCH=arm64 KCFLAGS=-w AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make LD=ld.lld ARCH=arm64 KCFLAGS=-w AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y exynos9610-m21dd_gcc_defconfig
+make LD=ld.lld ARCH=arm64 KCFLAGS=-w AR=llvm-ar NM=llvm-nm LLVM_NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip LLVM_AR=llvm-ar LLVM_DIS=llvm-dis CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 echo "Cleaning Stuff"
 rm -rf AIK/Image
