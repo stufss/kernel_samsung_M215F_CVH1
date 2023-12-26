@@ -1,0 +1,30 @@
+name: build
+
+on:
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3.5.3
+        with:
+          fetch-depth: 1
+
+      - name: Install packages & setup
+        run: |
+          bash init_clang_12.sh
+          
+      - name: Run build
+        run: |
+          export PATH=$PWD/toolchain/proton-clang/bin:$PATH
+          bash auto_workflow_gcc.sh
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: W_kernel_Gcc-12
+          path: AIK/Workflow_K.*_GCC-12.zip
