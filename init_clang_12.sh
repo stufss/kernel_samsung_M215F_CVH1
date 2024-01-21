@@ -1,8 +1,10 @@
 #clone proton clang v12 toolchain
-git clone --depth=1 -j$(nproc) --branch 20210123 https://github.com/kdrag0n/proton-clang.git toolchain/proton-clang
-
+wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210123.zip
+unzip proton-clang-20210123.zip
+mv proton-clang-20210123 proton-clang
 #gcc 12.3 
 wget -r -np -N https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu.tar.xz
+mv armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu.tar.xz arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu.tar.xz
 tar -xf arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu.tar.xz
 mv arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu gcc
 mv gcc toolchain
