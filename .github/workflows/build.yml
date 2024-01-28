@@ -13,13 +13,18 @@ jobs:
         uses: actions/checkout@v3.5.3
         with:
           fetch-depth: 1
-
-      - name: Install packages & setup
-        run: |
+      - name: Install Updates
+        run: |        
           sudo apt update
           sudo apt purge firefox -y
           sudo apt upgrade
+
+      - name: Install packages
+        run: |
           sudo apt -y install wget python3
+          
+      - name: Setup Toolchains
+        run: |          
           bash init_clang_12.sh
           
       - name: Run build
