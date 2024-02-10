@@ -16,7 +16,6 @@ jobs:
           
       - name: Setup Toolchains
         run: |
-          sudo apt purge firefox -y
           bash init_clang_12.sh
           
       - name: Run build
