@@ -24,10 +24,12 @@ make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 echo "Cleaning Stuff"
 rm -rf AIK/Image
+rm -rf config
 echo "done"
 echo ""
 echo "Copying Stuff"
 cp -r arch/arm64/boot/Image AIK/Image
+cp -r .config AIK/config
 echo "done"
 echo ""
 kver=$(make kernelversion)

@@ -1,1 +1,24 @@
-NAZ_OLD
+  _____ _                   _   _           
+ / ____| |                 | \ | |          
+| |    | | __ _ _ __   __ _|  \| | __ _ ____
+| |    | |/ _` | '_ \ / _` | . ` |/ _` |_  /
+| |____| | (_| | | | | (_| | |\  | (_| |/ / 
+ \_____|_|\__,_|_| |_|\__, |_| \_|\__,_/___|
+                       __/ |                    
+                      |___/                  
+==============================
+DEVICE   : SM-M215F
+Support  : Oneui | GSI
+==============================
+Selinux  : Enforcing
+Version  : v0.3
+Baseband : M215FDDU3CVH1
+==============================
+Compiled With Proton Clang 12
+Based on Naz v1
+==============================
+
+NOTE : Make Sure to Format Data if the phone 
+       bootloops and if it still bootloops 
+       after formatting then flash dm_vertity 
+       or multidisabler
