@@ -649,7 +649,9 @@ CONFIG_ARM64_MODULE_CMODEL_LARGE=y
 #
 # Boot options
 #
-CONFIG_CMDLINE=""
+CONFIG_CMDLINE="quiet androidboot.init_fatal_panic=true androidboot.init_fatal_reboot_target=recovery rcu_nocbs=0-7 noirqdebug nosoftlockup mce=ignore_ce cgroup_disable=pressure"
+# CONFIG_CMDLINE_FROM_BOOTLOADER is not set
+CONFIG_CMDLINE_EXTEND=y
 # CONFIG_EFI is not set
 # CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE is not set
 # CONFIG_UH is not set
