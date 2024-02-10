@@ -23,7 +23,11 @@ jobs:
         run: |
           export PATH=$PWD/toolchain/proton-clang/bin:$PATH
           bash auto_workflow_clang.sh
-
+      
+      - name: Config
+        run: |
+          cat .config
+          
       - name: Upload kernel
         uses: actions/upload-artifact@v3.1.2
         with:
