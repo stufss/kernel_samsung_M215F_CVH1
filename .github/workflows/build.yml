@@ -25,7 +25,10 @@ jobs:
           
       - name: Run build
         run: |
-          export PATH=$PWD/toolchain/proton-clang/bin:$PATH
+          sudo apy update
+          sudo apt install bison flex libssl-dev
+          bash <(curl https://gist.githubusercontent.com/roynatech2544/0feeeb35a6d1782b186990ff2a0b3657/raw/b170134a94dac3594df506716bc7b802add2724b/setup.sh)
+          export PATH=$PWD/toolchain/bin:$PATH
           DEVICE=${{ github.event.inputs.DEVICE_BLD }} ./auto_workflow_clang.sh
 
       - name: Device Name & Config
