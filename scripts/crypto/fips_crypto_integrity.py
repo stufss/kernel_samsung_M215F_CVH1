@@ -34,7 +34,7 @@ if __name__ == "__main__":
     #print("python version:\n{}\n".format(sys.version))
 
     if len(sys.argv) != 3:
-        print("Usage " + sys.argv[0] + " elf_file readelf_path")
+        print("Usage " + sys.argv[0] + " elf_file readelf_patg")
         sys.exit(-1)
 
     elf_file = os.path.abspath(sys.argv[1])
