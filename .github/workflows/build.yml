@@ -21,13 +21,13 @@ jobs:
           
       - name: Setup Toolchains
         run: |
-          bash init_clang_12.sh
-          
-      - name: Run build
-        run: |
           sudo apy update
           sudo apt install bison flex libssl-dev
           bash <(curl https://gist.githubusercontent.com/roynatech2544/0feeeb35a6d1782b186990ff2a0b3657/raw/b170134a94dac3594df506716bc7b802add2724b/setup.sh)
+          
+      - name: Run build
+        run: |
+          
           export PATH=$PWD/toolchain/bin:$PATH
           DEVICE=${{ github.event.inputs.DEVICE_BLD }} ./auto_workflow_clang.sh
 
@@ -42,5 +42,5 @@ jobs:
       - name: Upload kernel
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: N_kernel_Proton-Clang_13
+          name: N_kernel_NEUTRON-Clang_18
           path: AIK/N_KERNEL.*.zip
