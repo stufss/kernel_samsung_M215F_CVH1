@@ -1,6 +1,6 @@
-export LD_LIBRARY_PATH="$PWD/toolchain/proton-clang/lib:$LD_LIBRARY_PATH"
-export CROSS_COMPILE='$PWD/toolchain/proton-clang/bin/aarch64-linux-gnu-'
-export CROSS_COMPILE_ARM32='$PWD/toolchain/proton-clang/bin/arm-linux-gnueabi-'
+export LD_LIBRARY_PATH="$PWD/toolchain/lib:$LD_LIBRARY_PATH"
+export CROSS_COMPILE='$PWD/toolchain/bin/aarch64-linux-gnu-'
+export CROSS_COMPILE_ARM32='$PWD/toolchain/bin/arm-linux-gnueabi-'
 export LLVM=1
 
 export ARCH=arm64
@@ -16,9 +16,9 @@ CC=clang
 LD=ld.lld
 ARCH=arm64
 LLVM=1
-CROSS_COMPILE='$PWD/toolchain/proton-clang/bin/aarch64-linux-gnu-'
-CROSS_COMPILE_ARM32='$PWD/toolchain/proton-clang/bin/arm-linux-gnueabi-'
-CLANG_TRIPLE='$PWD/toolchain/proton-clang/bin/aarch64-linux-gnu-'
+CROSS_COMPILE='$PWD/toolchain/bin/aarch64-linux-gnu-'
+CROSS_COMPILE_ARM32='$PWD/toolchain/bin/arm-linux-gnueabi-'
+CLANG_TRIPLE='$PWD/toolchain/bin/aarch64-linux-gnu-'
 '
 
 clear
@@ -42,6 +42,6 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "Zipping Stuff"
 cd AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_CLANG_${DEVICE}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}.zip * -x .git README.md *placeholder
 cd ..
 echo "Ready to Flash"
