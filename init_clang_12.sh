@@ -1,5 +1,5 @@
 #clone proton clang v13 toolchain
-git clone --depth=1 https://gitlab.com/LeCmnGend/clang.git toolchain/proton-clang
+git clone --depth=1 https://gitlab.com/LeCmnGend/clang.git -b clang-16 toolchain/proton-clang
 
 #gcc 12.3 
 #wget https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-x86_64-aarch64-none-linux-gnu.tar.xz
