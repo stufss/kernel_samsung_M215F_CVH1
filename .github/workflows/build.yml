@@ -3,15 +3,17 @@ name: build
 on:
 
   workflow_dispatch:
-    inputs:
-      DEVICE_BLD:
-        description: 'DEVICE_BLD (The device you want to build for m21 or m31)'
-        required: true
-        default: 'm21'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - device: m21
+          - device: m31
+    name: "🚧 Build for ${{matrix.device}}"
 
     steps:
       - name: Checkout source
@@ -28,8 +30,7 @@ jobs:
       - name: Run build
         run: |
           
-          export PATH=$PWD/toolchain/bin:$PATH
-          DEVICE=${{ github.event.inputs.DEVICE_BLD }} ./auto_workflow_clang.sh
+          DEVICE=${{matrix.device}} ./auto_workflow_clang.sh
 
       - name: Device Name & Config
         run: |
