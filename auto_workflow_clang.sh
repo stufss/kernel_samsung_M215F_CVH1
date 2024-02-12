@@ -1,13 +1,28 @@
 export LLVM=1
+LLVM=1
+export KBUILD_BUILD_USER=ghazzor
 export ARCH=arm64
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
+
+PATH=$PWD/toolchain/bin:$PATH
 
 if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
-ARGS='CC=clang LD=ld.lld ARCH=arm64 AS='$PWD/toolchain/bin/llvm-as' AR='$PWD/toolchain/bin/llvm-ar' OBJDUMP='$PWD/toolchain/bin/llvm-objdump' READELF='$PWD/toolchain/bin/llvm-readelf' CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-'
+ARGS='
+CC=clang
+LD=ld.lld
+ARCH=arm64
+AS=llvm-as
+AR=llvm-ar
+OBJDUMP=llvm-objdump
+READELF=llvm-readelf
+CROSS_COMPILE=aarch64-linux-gnu-
+CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+CLANG_TRIPLE=aarch64-linux-gnu-
+'
 
 clear
 make clean && make distclean
