@@ -27,8 +27,7 @@ jobs:
           
       - name: Run build
         run: |
-          
-          export PATH=$PWD/toolchain/bin:$PATH
+          LLVM=1
           DEVICE=${{ github.event.inputs.DEVICE_BLD }} ./auto_workflow_clang.sh
 
       - name: Device Name & Config
