@@ -43,5 +43,5 @@ jobs:
       - name: Upload kernel
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: N_kernel_NEUTRON-Clang_18
+          name: N_kernel-${{matrix.device}}_Clang_18
           path: AIK/N_KERNEL.*.zip
