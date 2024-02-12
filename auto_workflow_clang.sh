@@ -1,6 +1,3 @@
-export LD_LIBRARY_PATH="$PWD/toolchain/lib:$LD_LIBRARY_PATH"
-export CROSS_COMPILE='$PWD/toolchain/bin/aarch64-linux-gnu-'
-export CROSS_COMPILE_ARM32='$PWD/toolchain/bin/arm-linux-gnueabi-'
 export LLVM=1
 
 export ARCH=arm64
@@ -11,24 +8,12 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
-ARGS='
-CC=clang
-LD=ld.lld
-ARCH=arm64
-LLVM=1
-AS=llvm-as 
-AR=llvm-ar 
-OBJDUMP=llvm-objdump 
-READELF=llvm-readelf
-CROSS_COMPILE='$PWD/toolchain/bin/aarch64-linux-gnu-'
-CROSS_COMPILE_ARM32='$PWD/toolchain/bin/arm-linux-gnueabi-'
-CLANG_TRIPLE='$PWD/toolchain/bin/aarch64-linux-gnu-'
-'
+ARGS="CC=clang LD=ld.lld ARCH=arm64 AS=llvm-as AR=llvm-ar OBJDUMP=llvm-objdump READELF=llvm-readelf CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-"
 
 clear
 make clean && make distclean
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make ${ARGS} LLVM=1 KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
+make ${ARGS} LLVM=1 KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 
 echo "Cleaning Stuff"
