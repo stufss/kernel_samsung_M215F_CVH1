@@ -1,5 +1,4 @@
 export LLVM=1
-
 export ARCH=arm64
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
@@ -8,7 +7,7 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
-ARGS="CC=clang LD=ld.lld ARCH=arm64 AS=$PWD/toolchain/llvm-as AR=$PWD/toolchain/llvm-ar OBJDUMP=$PWD/toolchain/llvm-objdump READELF=$PWD/toolchain/llvm-readelf CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-"
+ARGS='CC=clang LD=ld.lld ARCH=arm64 AS='$PWD/toolchain/llvm-as' AR='$PWD/toolchain/llvm-ar' OBJDUMP='$PWD/toolchain/llvm-objdump' READELF='$PWD/toolchain/llvm-readelf' CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-'
 
 clear
 make clean && make distclean
