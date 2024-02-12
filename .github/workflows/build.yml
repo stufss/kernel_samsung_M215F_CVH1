@@ -3,6 +3,11 @@ name: build
 on:
 
   workflow_dispatch:
+    inputs:
+      DEVICE_BLD:
+        description: 'DEVICE_BLD (The device you want to build for m21 or m31)'
+        required: true
+        default: 'm21'
 
 jobs:
   build:
@@ -21,10 +26,18 @@ jobs:
       - name: Run build
         run: |
           export PATH=$PWD/toolchain/proton-clang/bin:$PATH
-          bash auto_workflow_clang.sh
+          DEVICE=${{ github.event.inputs.DEVICE_BLD }} ./auto_workflow_clang.sh
+
+      - name: Device Name & Config
+        run: |
+          cat .config | grep CONFIG_LOCALVERSION=
+          echo ''
+          echo ''
+          echo ''
+          cat .config
 
       - name: Upload kernel
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: N_kernel_Proton-Clang_12
-          path: AIK/N_KERNEL.*_PROTON_CLANG_12_LATEST.zip
+          name: N_kernel_Proton-Clang_13
+          path: AIK/N_KERNEL.*.zip
