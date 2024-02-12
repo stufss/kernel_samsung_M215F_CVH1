@@ -11,7 +11,7 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
-ARGS="
+ARGS='
 CC=clang
 LD=ld.lld
 ARCH=arm64
@@ -23,7 +23,7 @@ READELF=llvm-readelf
 CROSS_COMPILE='$PWD/toolchain/bin/aarch64-linux-gnu-'
 CROSS_COMPILE_ARM32='$PWD/toolchain/bin/arm-linux-gnueabi-'
 CLANG_TRIPLE='$PWD/toolchain/bin/aarch64-linux-gnu-'
-"
+'
 
 clear
 make clean && make distclean
