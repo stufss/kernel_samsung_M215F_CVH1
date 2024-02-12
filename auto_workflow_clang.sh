@@ -1,4 +1,7 @@
+export PATH=$PWD/toolchain/bin:$PATH
+export LLVM_DIR=$PWD/toolchain/bin
 export LLVM=1
+
 export ARCH=arm64
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
@@ -7,12 +10,20 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
-ARGS='CC=clang LD=ld.lld ARCH=arm64 AS='$PWD/toolchain/bin/llvm-as' AR='$PWD/toolchain/bin/llvm-ar' OBJDUMP='$PWD/toolchain/bin/llvm-objdump' READELF='$PWD/toolchain/bin/llvm-readelf' CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-'
+ARGS='
+CC=clang
+LD=ld.lld
+ARCH=arm64
+CROSS_COMPILE=aarch64-linux-gnu-
+CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+CLANG_TRIPLE=aarch64-linux-gnu-
+LLVM=1
+'
 
-clear
 make clean && make distclean
-make ${ARGS} LLVM=1 KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
-make ${ARGS} LLVM=1 KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+clear
+make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
+make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 
 echo "Cleaning Stuff"

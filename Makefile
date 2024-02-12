@@ -378,15 +378,15 @@ HOST_LOADLIBES := $(HOST_LFS_LIBS)
 CPP		= $(CC) -E
 ifneq ($(LLVM),)
 CC		= clang
-LD		= ld.lld
-LDGOLD		= ld.gold
-AR		= llvm-ar
-NM		= llvm-nm
-OBJCOPY		= llvm-objcopy
-OBJDUMP		= llvm-objdump
-READELF		= llvm-readelf
-OBJSIZE		= llvm-size
-STRIP		= llvm-strip
+LD		= $(LLVM_DIR)/ld.lld
+LDGOLD		= $(LLVM_DIR)/ld.gold
+AR		= $(LLVM_DIR)/llvm-ar
+NM		= $(LLVM_DIR)/llvm-nm
+OBJCOPY		= $(LLVM_DIR)/llvm-objcopy
+OBJDUMP		= $(LLVM_DIR)/llvm-objdump
+READELF		= $(LLVM_DIR)/llvm-readelf
+OBJSIZE		= $(LLVM_DIR)/llvm-size
+STRIP		= $(LLVM_DIR)/llvm-strip
 else
 CC		= $(CROSS_COMPILE)gcc
 LD		= $(CROSS_COMPILE)ld
@@ -408,7 +408,11 @@ PYTHON		= python
 CHECK		= sparse
 
 ifeq ($(CONFIG_EXYNOS_FMP_FIPS),)
+ifneq ($(LLVM),)
+READELF		= $(LLVM_DIR)/llvm-readelf
+else
 READELF        = $(CROSS_COMPILE)readelf
+endif
 export READELF
 endif
 
