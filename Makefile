@@ -377,7 +377,7 @@ HOST_LOADLIBES := $(HOST_LFS_LIBS)
 # Make variables (CC, etc...)
 CPP		= $(CC) -E
 ifneq ($(LLVM),)
-CC		= clang
+CC		= $(LLVM_DIR)/clang
 LD		= $(LLVM_DIR)/ld.lld
 LDGOLD		= $(LLVM_DIR)/ld.gold
 AR		= $(LLVM_DIR)/llvm-ar
