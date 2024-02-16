@@ -781,8 +781,8 @@ KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53 \
                    -fgraphite-identity
 endif
 ifeq ($(cc-name),clang)
-KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
-                   -mcpu=cortex-a73+crypto+crc+sha2+aes \
+KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a53 \
+                   -mcpu=cortex-a53+crypto+crc+sha2+aes \
                    -mllvm -polly \
 		           -mllvm -polly-run-dce \
 		           -mllvm -polly-run-inliner \
