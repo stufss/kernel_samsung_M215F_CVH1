@@ -782,7 +782,7 @@ KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
                    -mllvm -polly \
 		           -mllvm -polly-run-dce \
 		           -mllvm -polly-run-inliner \
-		           -mllvm -polly-opt-fusion=max \
+		           -mllvm -polly-loopfusion-greedy \
 		           -mllvm -polly-ast-use-context \
 		           -mllvm -polly-detect-keep-going \
 		           -mllvm -polly-vectorizer=stripmine \
