@@ -46,6 +46,14 @@ jobs:
           echo ''
           cat .config
 
+      - name: Upload to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          document: AIK/N_KERNEL*.zip
+          message: "Lawde ka kernel"
+
       - name: Upload kernel
         uses: actions/upload-artifact@v3.1.2
         with:
