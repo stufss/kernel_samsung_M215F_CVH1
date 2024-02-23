@@ -782,19 +782,23 @@ KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53 \
 endif
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
-                   -mcpu=cortex-a73+crypto+crc+sha2+aes \
-                   -mllvm -polly \
-		           -mllvm -polly-run-dce \
-		           -mllvm -polly-run-inliner \
-		           -mllvm -polly-loopfusion-greedy \
-		           -mllvm -polly-ast-use-context \
-		           -mllvm -polly-detect-keep-going \
-		           -mllvm -polly-vectorizer=stripmine \
-		           -mllvm -polly-invariant-load-hoisting
+                   -mcpu=cortex-a73+crypto+crc+sha2+aes
 endif
 endif
 endif
 endif
+
+ifeq ($(cc-name),clang)
+KBUILD_CFLAGS	+= -mllvm -polly \
+		   -mllvm -polly-run-dce \
+	           -mllvm -polly-run-inliner \
+	           -mllvm -polly-loopfusion-greedy \
+                   -mllvm -polly-ast-use-context \
+	           -mllvm -polly-detect-keep-going \
+	           -mllvm -polly-vectorizer=stripmine \
+	           -mllvm -polly-invariant-load-hoisting
+endif
+
 
 KBUILD_CFLAGS += $(call cc-ifversion, -lt, 0409, \
 			$(call cc-disable-warning,maybe-uninitialized,))
