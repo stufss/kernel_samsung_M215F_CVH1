@@ -3,10 +3,17 @@ name: build
 on:
 
   workflow_dispatch:
-
+  push:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - device: m21
+          - device: m31
+    name: "🚧 Build for ${{matrix.device}}"
 
     steps:
       - name: Checkout source
@@ -16,16 +23,31 @@ jobs:
           
       - name: Setup Toolchains
         run: |
-          sudo apt purge firefox -y
-          bash init_clang_12.sh
+          sudo apt update
+          sudo apt install bison flex libssl-dev libarchive-tools -y
+          mkdir -p toolchain
+          cd toolchain
+          echo 'Download antman and sync'
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          echo 'Patch for glibc'
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
+          echo 'Done'
           
       - name: Run build
         run: |
-          export PATH=$PWD/toolchain/proton-clang/bin:$PATH
-          bash auto_workflow_clang.sh
+          
+          DEVICE=${{matrix.device}} ./auto_workflow_clang.sh
+
+      - name: Device Name & Config
+        run: |
+          cat .config | grep CONFIG_LOCALVERSION=
+          echo ''
+          echo ''
+          echo ''
+          cat .config
 
       - name: Upload kernel
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: N_kernel_Proton-Clang_12
-          path: AIK/N_KERNEL.*_PROTON_CLANG_12_LATEST.zip
+          name: N_kernel-${{matrix.device}}_Clang_18
+          path: AIK/N_KERNEL.*.zip
