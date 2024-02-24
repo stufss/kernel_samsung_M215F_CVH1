@@ -36,7 +36,7 @@ jobs:
       - name: Run build
         run: |
           
-          DEVICE=${{matrix.device}} ./auto_workflow_clang.sh
+          DEVICE=${{matrix.device}} ./build.sh
 
       - name: Device Name & Config
         run: |
