@@ -13,8 +13,6 @@ jobs:
         include:
           - device: m21
           - device: m31
-          - device: "m21 ksu"
-          - device: "m31 ksu"
     name: "🚧 Build for ${{matrix.device}}"
 
     steps:
@@ -22,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          submodules: recursive
+          submodules: true
           
       - name: Setup Toolchains
         run: |
@@ -39,7 +37,7 @@ jobs:
       - name: Run build
         run: |
           
-          DEVICE=${{matrix.device}} ./build.sh
+          DEVICE=${{matrix.device}} ./build.sh ksu
 
       - name: Device Name & Config
         run: |
@@ -55,7 +53,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           document: AIK/N_KERNEL*.zip
-          message: "Build COmpleted"
+          message: "KSU Build COmpleted"
 
       - name: Upload kernel
         uses: actions/upload-artifact@v4
