@@ -1,5 +1,7 @@
-PATH=$PWD/toolchain/bin:$PATH
-export LLVM_DIR=$PWD/toolchain/bin
+wkdir=$PWD
+
+PATH=${wkdir}/toolchain/bin:$PATH
+export LLVM_DIR=${wkdir}/toolchain/bin
 export LLVM=1
 
 export ARCH=arm64
@@ -13,6 +15,10 @@ fi
 if [ "$1" = "ksu" ]; then
 KSU=ksu.config
 ksu_status_on="_w/ksu"
+cp -r ksu.patch KernelSU/ksu.patch
+cd ${wkdir}/KernelSU
+git apply ksu.patch
+cd ${wkdir}
 fi
 
 ARGS='
@@ -49,8 +55,8 @@ echo "Copying Stuff"
 
 # Define potential locations for the image binary
 locations=(
-  "$PWD/arch/arm64/boot"
-  "$PWD/${out}/arch/arm64/boot"
+  "${wkdir}/arch/arm64/boot"
+  "${wkdir}/${out}/arch/arm64/boot"
 )
 
 # Check each location sequentially
@@ -75,7 +81,8 @@ echo ""
 kver=$(make kernelversion)
 kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "Zipping Stuff"
-cd AIK
+
+cd ${wkdir}/AIK
 rm -rf N_KERNEL.*.zip
 zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}${ksu_status_on}.zip * -x .git README.md *placeholder
 cd ..
