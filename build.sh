@@ -12,9 +12,13 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
+
 echo 'Initilizing Submodules'
 git submodule init && git submodule update
 echo 'Done'
+echo ""
+echo ""
+export ksu_st='w/o_ksu'
 
 if [ "$1" = "ksu" ]; then
 KSU=ksu.config
@@ -23,10 +27,10 @@ cp -r ksu.patch KernelSU/ksu.patch
 cd ${wkdir}/KernelSU
 git apply ksu.patch
 cd ${wkdir}
+echo ""
+echo ""
 echo 'KSU patch applied'
-ksu_st='w/ksu'
-else
-ksu_st='w/o_ksu'
+export ksu_st='w/ksu'
 fi
 
 ARGS='
