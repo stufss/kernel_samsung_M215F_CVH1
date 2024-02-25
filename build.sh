@@ -12,6 +12,10 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
+echo 'Initilizing Submodules'
+git submodule init && git submodule update
+echo 'Done'
+
 if [ "$1" = "ksu" ]; then
 KSU=ksu.config
 echo 'applying KSU patch'
@@ -19,7 +23,10 @@ cp -r ksu.patch KernelSU/ksu.patch
 cd ${wkdir}/KernelSU
 git apply ksu.patch
 cd ${wkdir}
-echo 'done'
+echo 'KSU patch applied'
+ksu_st='w/ksu'
+else
+ksu_st='w/o_ksu'
 fi
 
 ARGS='
@@ -85,6 +92,6 @@ echo "Zipping Stuff"
 
 cd ${wkdir}/AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}_${ksu_st}.zip * -x .git README.md *placeholder
 cd ..
 echo "Ready to Flash"
