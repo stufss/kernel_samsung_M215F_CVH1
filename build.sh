@@ -10,6 +10,11 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
+if [ "$1" = "ksu" ]; then
+KSU=ksu.config
+ksu_status_on="_w/ksu"
+fi
+
 ARGS='
 CC=clang
 LD=ld.lld
@@ -30,14 +35,7 @@ LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
 '
 
-if [ "$1" = "ksu" ]; then
-KSU=ksu.config
-ksu_status_on="_w/ksu"
-else
-ksu_status_on=""  
-fi
-
-make clean && make distclean
+make distclean
 clear
 make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config ${KSU}
 make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
