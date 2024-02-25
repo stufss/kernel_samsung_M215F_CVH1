@@ -12,10 +12,9 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
-
-echo 'Initilizing Submodules'
-/usr/bin/git submodule init 
-/usr/bin/git submodule update
+echo 'Initiliaze KernelSU'
+rm -rf KernelSU
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
 echo ""
 echo ""
 ls KernelSU 
