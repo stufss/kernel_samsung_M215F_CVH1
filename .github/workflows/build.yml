@@ -13,8 +13,8 @@ jobs:
         include:
           - device: m21
           - device: m31
-          - ksu_status: ksu
-          - ksu_status: ""
+          - device: "m21 ksu"
+          - device: "m31 ksu"
     name: "🚧 Build for ${{matrix.device}}"
 
     steps:
@@ -39,7 +39,7 @@ jobs:
       - name: Run build
         run: |
           
-          DEVICE=${{matrix.device}} ${{matrix.ksu_status}} ./build.sh
+          DEVICE=${{matrix.device}} ./build.sh
 
       - name: Device Name & Config
         run: |
@@ -60,5 +60,5 @@ jobs:
       - name: Upload kernel
         uses: actions/upload-artifact@v4
         with:
-          name: N_kernel-${{matrix.device}}_${{matrix.ksu_status}}_Clang_18
+          name: N_kernel-${{matrix.device}}__Clang_18
           path: AIK/N_KERNEL.*.zip
