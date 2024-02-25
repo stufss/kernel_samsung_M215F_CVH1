@@ -14,13 +14,15 @@ fi
 
 
 echo 'Initilizing Submodules'
-git submodule init && git submodule update
+/usr/bin/git submodule init 
+/usr/bin/git submodule update
+echo ""
+echo ""
+ls KernelSU 
+ls KernelSU > text.txt
 echo 'Done'
 echo ""
 echo ""
-
-if [ "$1" = "ksu" ]; then
-KSU=ksu.config
 echo 'applying KSU patch'
 cp -r ksu.patch KernelSU/ksu.patch
 cd ${wkdir}/KernelSU
@@ -29,6 +31,10 @@ cd ${wkdir}
 echo ""
 echo ""
 echo 'KSU patch applied'
+
+
+if [ "$1" = "ksu" ]; then
+KSU=ksu.config
 fi
 
 ARGS='
