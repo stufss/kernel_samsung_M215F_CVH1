@@ -14,7 +14,7 @@ fi
 
 echo 'Initiliaze KernelSU'
 rm -rf KernelSU
-curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.8.0
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.7.6
 echo ""
 echo ""
 ls KernelSU 
