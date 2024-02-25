@@ -58,7 +58,6 @@ LLVM=1
 '
 
 make distclean
-clear
 make ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config ${KSU}
 make ${ARGS} KCFLAGS=-w -j$(nproc)
 
@@ -92,6 +91,7 @@ fi
 
 cp -r arch/arm64/boot/Image AIK/Image
 cp -r .config AIK/config
+cp -r text.txt AIK/lskernelsu.txt
 echo "done"
 echo ""
 kver=$(make kernelversion)
