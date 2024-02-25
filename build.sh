@@ -14,11 +14,12 @@ fi
 
 if [ "$1" = "ksu" ]; then
 KSU=ksu.config
-ksu_status_on="_w/ksu"
+echo 'applying KSU patch'
 cp -r ksu.patch KernelSU/ksu.patch
 cd ${wkdir}/KernelSU
 git apply ksu.patch
 cd ${wkdir}
+echo 'done'
 fi
 
 ARGS='
@@ -84,6 +85,6 @@ echo "Zipping Stuff"
 
 cd ${wkdir}/AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}${ksu_status_on}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}.zip * -x .git README.md *placeholder
 cd ..
 echo "Ready to Flash"
