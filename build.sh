@@ -18,7 +18,6 @@ git submodule init && git submodule update
 echo 'Done'
 echo ""
 echo ""
-export ksu_st='w/o_ksu'
 
 if [ "$1" = "ksu" ]; then
 KSU=ksu.config
@@ -30,7 +29,6 @@ cd ${wkdir}
 echo ""
 echo ""
 echo 'KSU patch applied'
-export ksu_st='w/ksu'
 fi
 
 ARGS='
@@ -55,8 +53,8 @@ LLVM=1
 
 make distclean
 clear
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config ${KSU}
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config ${KSU}
+make ${ARGS} KCFLAGS=-w -j$(nproc)
 
 echo "Cleaning Stuff"
 rm -rf AIK/Image
@@ -96,6 +94,6 @@ echo "Zipping Stuff"
 
 cd ${wkdir}/AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}_${ksu_st}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}.zip * -x .git README.md *placeholder
 cd ..
 echo "Ready to Flash"
