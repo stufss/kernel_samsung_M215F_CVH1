@@ -525,7 +525,7 @@ static void write_wifi_version_info_file(struct slsi_dev *sdev)
 #else
 	SLSI_UNUSED_PARAMETER(filepath);
 #endif
-
+}
 static void write_m_test_chip_version_file(struct slsi_dev *sdev)
 {
 #ifdef CONFIG_SCSC_WLBTD
@@ -7731,7 +7731,9 @@ void slsi_collect_chipset_logs(struct work_struct *work)
 	void                    *buffer = NULL;
 	size_t size;
 	size_t bytes = 0;
+	#ifdef CONFIG_SCSC_WLBTD
 	int ret = 0;
+	#endif
 	char build_id_fw[128];
 	char build_id_drv[64];
 	size_t total_header;
