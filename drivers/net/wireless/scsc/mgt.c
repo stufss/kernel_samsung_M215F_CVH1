@@ -525,7 +525,6 @@ static void write_wifi_version_info_file(struct slsi_dev *sdev)
 #else
 	SLSI_UNUSED_PARAMETER(filepath);
 #endif
-}
 
 static void write_m_test_chip_version_file(struct slsi_dev *sdev)
 {
