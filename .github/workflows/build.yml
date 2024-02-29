@@ -37,6 +37,7 @@ jobs:
         run: |
           
           DEVICE=${{matrix.device}} ./build.sh
+          git log -1 --pretty=format:"%s" > gitlog.txt
 
       - name: Device Name & Config
         run: |
@@ -52,7 +53,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           document: AIK/N_KERNEL*.zip
-          message: "Build COmpleted"
+          message_file: gitlog.txt
 
       - name: Upload kernel
         uses: actions/upload-artifact@v4
