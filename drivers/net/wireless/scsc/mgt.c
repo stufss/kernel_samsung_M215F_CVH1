@@ -526,7 +526,7 @@ static void write_wifi_version_info_file(struct slsi_dev *sdev)
 	SLSI_UNUSED_PARAMETER(filepath);
 #endif
 }
-
+#endif
 static void write_m_test_chip_version_file(struct slsi_dev *sdev)
 {
 #ifdef CONFIG_SCSC_WLBTD
