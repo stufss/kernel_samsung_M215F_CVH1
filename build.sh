@@ -19,6 +19,7 @@ CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 CLANG_TRIPLE=aarch64-linux-gnu-
 AR='${LLVM_DIR}/llvm-ar'
 NM='${LLVM_DIR}/llvm-nm'
+AS='${LLVM_DIR}/llvm-as'
 OBJCOPY='${LLVM_DIR}/llvm-objcopy'
 OBJDUMP='${LLVM_DIR}/llvm-objdump'
 READELF='${LLVM_DIR}/llvm-readelf'
