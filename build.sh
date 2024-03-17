@@ -12,11 +12,11 @@ fi
 
 ARGS='
 CC=clang
-LD=ld.lld
+LD='${LLVM_DIR}/ld.lld'
 ARCH=arm64
-CROSS_COMPILE=aarch64-linux-gnu-
-CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-CLANG_TRIPLE=aarch64-linux-gnu-
+CROSS_COMPILE='${LLVM_DIR}/aarch64-linux-gnu-'
+CROSS_COMPILE_ARM32='${LLVM_DIR}/arm-linux-gnueabi-'
+CLANG_TRIPLE='${LLVM_DIR}/aarch64-linux-gnu-'
 AR='${LLVM_DIR}/llvm-ar'
 NM='${LLVM_DIR}/llvm-nm'
 AS='${LLVM_DIR}/llvm-as'
