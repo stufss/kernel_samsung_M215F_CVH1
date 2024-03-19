@@ -33,9 +33,8 @@ LLVM=1
 
 make distclean
 clear
-rm -rf out
-make O=out ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
-make O=out ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
+make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 echo "  Cleaning Stuff"
 rm -rf AIK/Image
@@ -65,8 +64,8 @@ if ! $found; then
   exit 1
 fi
 
-cp -r out/arch/arm64/boot/Image AIK/Image
-cp -r out/.config AIK/config
+cp -r arch/arm64/boot/Image AIK/Image
+cp -r .config AIK/config
 echo "  done"
 echo ""
 kver=$(make kernelversion)
