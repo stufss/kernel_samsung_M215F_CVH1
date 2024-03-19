@@ -31,22 +31,23 @@ LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
 '
 
-make clean && make distclean
+make distclean
 clear
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
-make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+rm -rf out
+make O=out ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
+make O=out ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
-echo "Cleaning Stuff"
+echo "  Cleaning Stuff"
 rm -rf AIK/Image
 rm -rf config
-echo "done"
+echo "  done"
 echo ""
-echo "Copying Stuff"
+echo "  Copying Stuff"
 
 # Define potential locations for the image binary
 locations=(
   "$PWD/arch/arm64/boot"
-  "$PWD/${out}/arch/arm64/boot"
+  "$PWD/out/arch/arm64/boot"
 )
 
 # Check each location sequentially
@@ -60,19 +61,19 @@ done
 
 # Handle the case where image binary wasn't found
 if ! $found; then
-  echo "Error: image binary not found in any of the specified locations!"
+  echo "  ERROR : image binary not found in any of the specified locations!"
   exit 1
 fi
 
-cp -r arch/arm64/boot/Image AIK/Image
-cp -r .config AIK/config
-echo "done"
+cp -r out/arch/arm64/boot/Image AIK/Image
+cp -r out/.config AIK/config
+echo "  done"
 echo ""
 kver=$(make kernelversion)
 kmod=$(echo ${kver} | awk -F'.' '{print $3}')
-echo "Zipping Stuff"
+echo "  Zipping Stuff"
 cd AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_CLANG_18_${DEVICE}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}.zip * -x .git README.md *placeholder
 cd ..
-echo "Ready to Flash"
+echo "  Ready to Flash"
