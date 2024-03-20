@@ -46,8 +46,8 @@ make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
 
 echo "  CLEAN"
 rm -rf AIK/Image
-rm -rf config
-rm -rf N_KERNEL.*.zip
+rm -rf AIK/config
+rm -rf AIK/N_KERNEL.*.zip
 
 # Define potential locations for the image binary
 locations=(
