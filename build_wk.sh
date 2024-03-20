@@ -38,7 +38,6 @@ LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
 '
 
-make distclean
 clear
 make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config ${CONFIG_SLMK}
 make ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)

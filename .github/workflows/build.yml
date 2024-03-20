@@ -36,7 +36,8 @@ jobs:
       - name: Run build
         run: |
           
-          DEVICE=${{matrix.device}} ./build.sh
+          DEVICE=${{matrix.device}} ./build_wk.sh
+          DEVICE=${{matrix.device}} ./build_wk.sh slmk
 
       - name: Device Name & Config
         run: |
@@ -57,5 +58,5 @@ jobs:
       - name: Upload kernel
         uses: actions/upload-artifact@v4
         with:
-          name: N_kernel-${{matrix.device}}_Clang_18
+          name: N_kernel-${{matrix.device}}
           path: AIK/N_KERNEL.*.zip
