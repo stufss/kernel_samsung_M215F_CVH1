@@ -35,9 +35,6 @@ CFLAGS_kcov.o := $(call cc-option, -fno-conserve-stack -fno-stack-protector)
 # Don't instrument error handlers
 CFLAGS_cfi.o = $(DISABLE_CFI_CLANG)
 
-# Don't instrument error handlers
-CFLAGS_cfi.o = $(DISABLE_CFI_CLANG)
-
 obj-y += sched/
 obj-y += locking/
 obj-y += power/

@@ -1429,7 +1429,6 @@ ifdef cfi-flags
   ifeq ($(call cc-option, $(cfi-flags)),)
 	@echo Cannot use CONFIG_CFI: $(cfi-flags) not supported by compiler >&2 && exit 1
   endif
-<<<<<<< HEAD
 else ifdef CONFIG_LTO_GCC
   ifdef CONFIG_UBSAN
     ifeq ($(call gcc-ifversion,-lt,0600,y),y)
@@ -1445,8 +1444,6 @@ else ifdef CONFIG_LTO_GCC
   ifeq ($(call ld-ifversion,-lt,227000000,y),y)
 	@echo Cannot use CONFIG_LTO_GCC: requires binutils 2.27 or later >&2 && exit 1
   endif
-=======
->>>>>>> d590fd127d47 (ANDROID: add support for clang Control Flow Integrity (CFI))
 endif
 	@:
 
