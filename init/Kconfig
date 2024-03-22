@@ -1219,6 +1219,30 @@ config CC_OPTIMIZE_FOR_SIZE
 
 endchoice
 
+choice
+    prompt "Optimize kernel for CPU cluster"
+    default CC_OPTIMIZE_FOR_CORTEX_A53
+    help
+        Select the CPU cluster to optimize the kernel for.
+        Clang can only optimize for one CPU cluster at a time i.e.
+        in a big.LITTLE configuration only one cluster can be optmized
+
+config CC_OPTIMIZE_FOR_CORTEX_A73
+    bool "Cortex-A73"
+    help
+        Optimize the kernel for the Cortex-A73 CPU cluster.
+
+        If unsure, say N.
+
+config CC_OPTIMIZE_FOR_CORTEX_A53
+    bool "Cortex-A53"
+    help
+        Optimize the kernel for the Cortex-A53 CPU cluster.
+
+        If unsure, say Y.
+
+endchoice
+
 config SYSCTL
 	bool
 
