@@ -785,16 +785,23 @@ KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53 \
                    -fgraphite-identity
 endif
 ifeq ($(cc-name),clang)
+ifdef CONFIG_CC_OPTIMIZE_FOR_CORTEX_A73
 KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
-                   -mcpu=cortex-a73+crypto+crc+sha2+aes \
-                   -mllvm -polly \
-		           -mllvm -polly-run-dce \
-		           -mllvm -polly-run-inliner \
-		           -mllvm -polly-loopfusion-greedy \
-		           -mllvm -polly-ast-use-context \
-		           -mllvm -polly-detect-keep-going \
-		           -mllvm -polly-vectorizer=stripmine \
-		           -mllvm -polly-invariant-load-hoisting
+                   -mcpu=cortex-a73+crypto+crc+sha2+aes
+else
+ifdef CONFIG_CC_OPTIMIZE_FOR_CORTEX_A53
+KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a53 \
+                   -mcpu=cortex-a53+crypto+crc+sha2+aes
+endif
+KBUILD_CFLAGS   += -mllvm -polly \
+		   -mllvm -polly-run-dce \
+		   -mllvm -polly-run-inliner \
+		   -mllvm -polly-loopfusion-greedy \
+		   -mllvm -polly-ast-use-context \
+		   -mllvm -polly-detect-keep-going \
+		   -mllvm -polly-vectorizer=stripmine \
+		   -mllvm -polly-invariant-load-hoisting
+endif
 endif
 endif
 endif
