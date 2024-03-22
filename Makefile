@@ -768,7 +768,15 @@ ifeq ($(cc-name),gcc)
 KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53
 endif
 ifeq ($(cc-name),clang)
-KBUILD_CFLAGS	+= -mcpu=cortex-a73 -mtune=cortex-a73
+ifdef CONFIG_CC_OPTIMIZE_FOR_CORTEX_A53
+KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a53 \
+                   -mcpu=cortex-a53+crypto+crc+sha2+aes
+else
+ifdef CONFIG_CC_OPTIMIZE_FOR_CORTEX_A73
+KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
+                   -mcpu=cortex-a73+crypto+crc+sha2+aes
+endif
+endif
 endif
 endif
 endif
