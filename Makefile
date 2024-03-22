@@ -786,9 +786,18 @@ KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53 \
                    -fgraphite-identity
 endif
 ifeq ($(cc-name),clang)
+ifdef CONFIG_CC_OPTIMIZE_FOR_CORTEX_A73
 KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a73 \
-                   -mcpu=cortex-a73+crypto+crc+sha2+aes \
-                   -mllvm -polly \
+                   -mcpu=cortex-a73+crypto+crc+sha2+aes
+CONFIG_LOCALVERSION += -a73
+else
+ifdef CONFIG_CC_OPTIMIZE_FOR_CORTEX_A53
+KBUILD_CFLAGS   += -march=armv8-a+crypto+crc+sha2+aes -mtune=cortex-a53 \
+                   -mcpu=cortex-a53+crypto+crc+sha2+aes
+CONFIG_LOCALVERSION += -a53
+endif
+endif
+KBUILD_CFLAGS   += -mllvm -polly \
 		           -mllvm -polly-run-dce \
 		           -mllvm -polly-run-inliner \
 		           -mllvm -polly-loopfusion-greedy \
