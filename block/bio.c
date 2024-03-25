@@ -602,11 +602,18 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
 	if (bio_flagged(bio_src, BIO_THROTTLED))
 		bio_set_flag(bio, BIO_THROTTLED);
 	bio->bi_opf = bio_src->bi_opf;
+#ifdef CONFIG_CRYPTO_DISKCIPHER
+	bio->bi_iter.bi_dun = bio_src->bi_iter.bi_dun;
+#endif
 	bio->bi_write_hint = bio_src->bi_write_hint;
 	bio->bi_iter = bio_src->bi_iter;
 	bio->bi_io_vec = bio_src->bi_io_vec;
+#ifdef CONFIG_BLK_DEV_CRYPT
+	bio->bi_cryptd = bio_src->bi_cryptd;
+#endif
 
 	bio_clone_blkcg_association(bio, bio_src);
+	bio->bi_sec_flags = bio_src->bi_sec_flags;
 }
 EXPORT_SYMBOL(__bio_clone_fast);
 
@@ -689,6 +696,13 @@ struct bio *bio_clone_bioset(struct bio *bio_src, gfp_t gfp_mask,
 	bio->bi_write_hint	= bio_src->bi_write_hint;
 	bio->bi_iter.bi_sector	= bio_src->bi_iter.bi_sector;
 	bio->bi_iter.bi_size	= bio_src->bi_iter.bi_size;
+#ifdef CONFIG_BLK_DEV_CRYPT
+#ifdef CONFIG_BLK_DEV_CRYPT_DUN
+	bio->bi_iter.bi_dun = bio_src->bi_iter.bi_dun;
+#endif
+	bio->bi_cryptd		= bio_src->bi_cryptd;
+#endif
+	bio->bi_sec_flags       = bio_src->bi_sec_flags;
 
 	switch (bio_op(bio)) {
 	case REQ_OP_DISCARD:
@@ -714,6 +728,9 @@ struct bio *bio_clone_bioset(struct bio *bio_src, gfp_t gfp_mask,
 		}
 	}
 
+#ifdef CONFIG_CRYPTO_DISKCIPHER
+	bio->bi_iter.bi_dun = bio_src->bi_iter.bi_dun;
+#endif
 	bio_clone_blkcg_association(bio, bio_src);
 
 	return bio;
@@ -876,9 +893,6 @@ void __bio_add_page(struct bio *bio, struct page *page,
 
 	bio->bi_iter.bi_size += len;
 	bio->bi_vcnt++;
-
-	if (!bio_flagged(bio, BIO_WORKINGSET) && unlikely(PageWorkingset(page)))
-		bio_set_flag(bio, BIO_WORKINGSET);
 }
 EXPORT_SYMBOL_GPL(__bio_add_page);
 

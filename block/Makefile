@@ -19,6 +19,11 @@ obj-$(CONFIG_BLK_CGROUP)	+= blk-cgroup.o
 obj-$(CONFIG_BLK_DEV_THROTTLING)	+= blk-throttle.o
 obj-$(CONFIG_IOSCHED_NOOP)	+= noop-iosched.o
 obj-$(CONFIG_IOSCHED_DEADLINE)	+= deadline-iosched.o
+obj-$(CONFIG_IOSCHED_MAPLE)	+= maple-iosched.o
+obj-$(CONFIG_IOSCHED_FIOPS)	+= fiops-iosched.o
+obj-$(CONFIG_IOSCHED_SIO)	+= sio-iosched.o
+obj-$(CONFIG_IOSCHED_ZEN)	+= zen-iosched.o
+obj-$(CONFIG_IOSCHED_ANXIETY)	+= anxiety-iosched.o
 obj-$(CONFIG_IOSCHED_CFQ)	+= cfq-iosched.o
 obj-$(CONFIG_MQ_IOSCHED_DEADLINE)	+= mq-deadline.o
 obj-$(CONFIG_MQ_IOSCHED_KYBER)	+= kyber-iosched.o
@@ -27,6 +32,8 @@ obj-$(CONFIG_IOSCHED_BFQ)	+= bfq.o
 
 obj-$(CONFIG_BLOCK_COMPAT)	+= compat_ioctl.o
 obj-$(CONFIG_BLK_CMDLINE_PARSER)	+= cmdline-parser.o
+obj-$(CONFIG_BLK_DEV_CRYPT)	+= blk-crypt.o
+obj-$(CONFIG_BLK_DEV_CRYPT_DISKCIPHER)	+= blk-crypt-fmp.o
 obj-$(CONFIG_BLK_DEV_INTEGRITY) += bio-integrity.o blk-integrity.o t10-pi.o
 obj-$(CONFIG_BLK_MQ_PCI)	+= blk-mq-pci.o
 obj-$(CONFIG_BLK_MQ_VIRTIO)	+= blk-mq-virtio.o
@@ -35,3 +42,15 @@ obj-$(CONFIG_BLK_DEV_ZONED)	+= blk-zoned.o
 obj-$(CONFIG_BLK_WBT)		+= blk-wbt.o
 obj-$(CONFIG_BLK_DEBUG_FS)	+= blk-mq-debugfs.o
 obj-$(CONFIG_BLK_SED_OPAL)	+= sed-opal.o
+
+# [IOPP-Wformat-v1.0.4.14.patch]
+# check calls to printf and scanf, etc.,
+# to make sure that the arguments supplied have types appropriate to the format string specified,
+# and that the conversions specified in the format string make sense.
+CFLAGS_blk-core.o = -Wformat
+CFLAGS_blk-sysfs.o = -Wformat
+CFLAGS_blk-merge.o = -Wformat
+CFLAGS_elevator.o = -Wformat
+CFLAGS_cfq-iosched.o = -Wformat
+CFLAGS_genhd.o = -Wformat
+
