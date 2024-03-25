@@ -1509,6 +1509,11 @@ static int type_read(struct policydb *p, struct hashtab *h, void *fp)
 		goto bad;
 	return 0;
 bad:
+// [ SEC_SELINUX_PORTING_COMMON
+#ifndef CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE
+	panic("SELinux:Failed to type read");
+#endif /*CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE*/
+// ] SEC_SELINUX_PORTING_COMMON
 	type_destroy(key, typdatum, NULL);
 	return rc;
 }
@@ -2386,6 +2391,10 @@ int policydb_read(struct policydb *p, void *fp)
 	p->reject_unknown = !!(le32_to_cpu(buf[1]) & REJECT_UNKNOWN);
 	p->allow_unknown = !!(le32_to_cpu(buf[1]) & ALLOW_UNKNOWN);
 
+	if ((le32_to_cpu(buf[1]) & POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE)) {
+		p->android_netlink_route = 1;
+	}
+
 	if (p->policyvers >= POLICYDB_VERSION_POLCAP) {
 		rc = ebitmap_read(&p->policycaps, fp);
 		if (rc)
@@ -2575,6 +2584,11 @@ int policydb_read(struct policydb *p, void *fp)
 out:
 	return rc;
 bad:
+// [ SEC_SELINUX_PORTING_COMMON
+#ifndef CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE
+	panic("SELinux:Failed to load policy");
+#endif /*CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE*/
+// ] SEC_SELINUX_PORTING_COMMON
 	policydb_destroy(p);
 	goto out;
 }
