@@ -244,21 +244,6 @@ out:
 	return err;
 }
 
-int __ovl_xattr_get(struct dentry *dentry, struct inode *inode,
-		    const char *name, void *value, size_t size)
-{
-	ssize_t res;
-	const struct cred *old_cred;
-	struct dentry *realdentry =
-		ovl_i_dentry_upper(inode) ?: ovl_dentry_lower(dentry);
-
-	old_cred = ovl_override_creds(dentry->d_sb);
-	res = __vfs_getxattr(realdentry, d_inode(realdentry), name, value,
-			     size);
-	ovl_revert_creds(old_cred);
-	return res;
-}
-
 int ovl_xattr_get(struct dentry *dentry, struct inode *inode, const char *name,
 		  void *value, size_t size)
 {
@@ -539,13 +524,12 @@ unsigned int ovl_get_nlink(struct dentry *lowerdentry,
 	int nlink_diff;
 	int nlink;
 	char buf[13];
-	ssize_t err;
+	int err;
 
 	if (!lowerdentry || !upperdentry || d_inode(lowerdentry)->i_nlink == 1)
 		return fallback;
 
-	err = ovl_vfs_getxattr(upperdentry, OVL_XATTR_NLINK,
-			       &buf, sizeof(buf) - 1);
+	err = vfs_getxattr(upperdentry, OVL_XATTR_NLINK, &buf, sizeof(buf) - 1);
 	if (err < 0)
 		goto fail;
 
@@ -567,7 +551,7 @@ unsigned int ovl_get_nlink(struct dentry *lowerdentry,
 	return nlink;
 
 fail:
-	pr_warn_ratelimited("overlayfs: failed to get index nlink (%pd2, err=%zi)\n",
+	pr_warn_ratelimited("overlayfs: failed to get index nlink (%pd2, err=%i)\n",
 			    upperdentry, err);
 	return fallback;
 }

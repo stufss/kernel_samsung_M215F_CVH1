@@ -29,10 +29,10 @@ struct ovl_lookup_data {
 static int ovl_check_redirect(struct dentry *dentry, struct ovl_lookup_data *d,
 			      size_t prelen, const char *post)
 {
-	ssize_t res;
+	int res;
 	char *s, *next, *buf = NULL;
 
-	res = ovl_vfs_getxattr(dentry, OVL_XATTR_REDIRECT, NULL, 0);
+	res = vfs_getxattr(dentry, OVL_XATTR_REDIRECT, NULL, 0);
 	if (res < 0) {
 		if (res == -ENODATA || res == -EOPNOTSUPP)
 			return 0;
@@ -45,7 +45,7 @@ static int ovl_check_redirect(struct dentry *dentry, struct ovl_lookup_data *d,
 	if (res == 0)
 		goto invalid;
 
-	res = ovl_vfs_getxattr(dentry, OVL_XATTR_REDIRECT, buf, res);
+	res = vfs_getxattr(dentry, OVL_XATTR_REDIRECT, buf, res);
 	if (res < 0)
 		goto fail;
 	if (res == 0)
@@ -85,7 +85,7 @@ err_free:
 	kfree(buf);
 	return 0;
 fail:
-	pr_warn_ratelimited("overlayfs: failed to get redirect (%zi)\n", res);
+	pr_warn_ratelimited("overlayfs: failed to get redirect (%i)\n", res);
 	goto err_free;
 invalid:
 	pr_warn_ratelimited("overlayfs: invalid redirect (%s)\n", buf);
@@ -99,10 +99,10 @@ static int ovl_acceptable(void *ctx, struct dentry *dentry)
 
 static struct ovl_fh *ovl_get_origin_fh(struct dentry *dentry)
 {
-	ssize_t res;
+	int res;
 	struct ovl_fh *fh = NULL;
 
-	res = ovl_vfs_getxattr(dentry, OVL_XATTR_ORIGIN, NULL, 0);
+	res = vfs_getxattr(dentry, OVL_XATTR_ORIGIN, NULL, 0);
 	if (res < 0) {
 		if (res == -ENODATA || res == -EOPNOTSUPP)
 			return NULL;
@@ -116,7 +116,7 @@ static struct ovl_fh *ovl_get_origin_fh(struct dentry *dentry)
 	if (!fh)
 		return ERR_PTR(-ENOMEM);
 
-	res = ovl_vfs_getxattr(dentry, OVL_XATTR_ORIGIN, fh, res);
+	res = vfs_getxattr(dentry, OVL_XATTR_ORIGIN, fh, res);
 	if (res < 0)
 		goto fail;
 
@@ -142,11 +142,10 @@ out:
 	return NULL;
 
 fail:
-	pr_warn_ratelimited("overlayfs: failed to get origin (%zi)\n", res);
+	pr_warn_ratelimited("overlayfs: failed to get origin (%i)\n", res);
 	goto out;
 invalid:
-	pr_warn_ratelimited("overlayfs: invalid origin (%*phN)\n",
-			    (int)res, fh);
+	pr_warn_ratelimited("overlayfs: invalid origin (%*phN)\n", res, fh);
 	goto out;
 }
 

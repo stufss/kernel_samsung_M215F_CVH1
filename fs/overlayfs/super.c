@@ -734,14 +734,6 @@ ovl_posix_acl_xattr_get(const struct xattr_handler *handler,
 }
 
 static int __maybe_unused
-__ovl_posix_acl_xattr_get(const struct xattr_handler *handler,
-			  struct dentry *dentry, struct inode *inode,
-			  const char *name, void *buffer, size_t size)
-{
-	return __ovl_xattr_get(dentry, inode, handler->name, buffer, size);
-}
-
-static int __maybe_unused
 ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
 			struct dentry *dentry, struct inode *inode,
 			const char *name, const void *value,
@@ -821,13 +813,6 @@ static int ovl_other_xattr_get(const struct xattr_handler *handler,
 	return ovl_xattr_get(dentry, inode, name, buffer, size);
 }
 
-static int __ovl_other_xattr_get(const struct xattr_handler *handler,
-				 struct dentry *dentry, struct inode *inode,
-				 const char *name, void *buffer, size_t size)
-{
-	return __ovl_xattr_get(dentry, inode, name, buffer, size);
-}
-
 static int ovl_other_xattr_set(const struct xattr_handler *handler,
 			       struct dentry *dentry, struct inode *inode,
 			       const char *name, const void *value,
@@ -841,7 +826,6 @@ ovl_posix_acl_access_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_ACCESS,
 	.flags = ACL_TYPE_ACCESS,
 	.get = ovl_posix_acl_xattr_get,
-	.__get = __ovl_posix_acl_xattr_get,
 	.set = ovl_posix_acl_xattr_set,
 };
 
@@ -850,7 +834,6 @@ ovl_posix_acl_default_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_DEFAULT,
 	.flags = ACL_TYPE_DEFAULT,
 	.get = ovl_posix_acl_xattr_get,
-	.__get = __ovl_posix_acl_xattr_get,
 	.set = ovl_posix_acl_xattr_set,
 };
 
@@ -863,7 +846,6 @@ static const struct xattr_handler ovl_own_xattr_handler = {
 static const struct xattr_handler ovl_other_xattr_handler = {
 	.prefix	= "", /* catch all */
 	.get = ovl_other_xattr_get,
-	.__get = __ovl_other_xattr_get,
 	.set = ovl_other_xattr_set,
 };
 
@@ -1020,7 +1002,11 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 		}
 
 		/* Don't inherit atime flags */
+#ifdef CONFIG_RKP_NS_PROT
+		rkp_reset_mnt_flags(ufs->upper_mnt, (MNT_NOATIME | MNT_NODIRATIME | MNT_RELATIME));
+#else
 		ufs->upper_mnt->mnt_flags &= ~(MNT_NOATIME | MNT_NODIRATIME | MNT_RELATIME);
+#endif
 
 		sb->s_time_gran = ufs->upper_mnt->mnt_sb->s_time_gran;
 
@@ -1093,7 +1079,11 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 		 * Make lower_mnt R/O.  That way fchmod/fchown on lower file
 		 * will fail instead of modifying lower fs.
 		 */
+#ifdef CONFIG_RKP_NS_PROT
+		rkp_set_mnt_flags(mnt, MNT_READONLY | MNT_NOATIME);
+#else
 		mnt->mnt_flags |= MNT_READONLY | MNT_NOATIME;
+#endif
 
 		ufs->lower_mnt[ufs->numlower] = mnt;
 		ufs->numlower++;
