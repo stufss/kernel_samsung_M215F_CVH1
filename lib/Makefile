@@ -76,7 +76,6 @@ obj-$(CONFIG_TEST_UUID) += test_uuid.o
 obj-$(CONFIG_TEST_PARMAN) += test_parman.o
 obj-$(CONFIG_TEST_KMOD) += test_kmod.o
 obj-$(CONFIG_TEST_DEBUG_VIRTUAL) += test_debug_virtual.o
-obj-$(CONFIG_TEST_MEMINIT) += test_meminit.o
 
 ifeq ($(CONFIG_DEBUG_KOBJECT),y)
 CFLAGS_kobject.o += -DDEBUG
@@ -261,3 +260,6 @@ UBSAN_SANITIZE_ubsan.o := n
 obj-$(CONFIG_SBITMAP) += sbitmap.o
 
 obj-$(CONFIG_PARMAN) += parman.o
+
+obj-$(CONFIG_DEBUG_SNAPSHOT) += debug-snapshot.o debug-snapshot-log.o debug-snapshot-utils.o \
+				debug-snapshot-pstore.o debug-snapshot-sysfs.o debug-snapshot-helper.o
