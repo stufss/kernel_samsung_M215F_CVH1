@@ -611,6 +611,36 @@ config LD_DEAD_CODE_DATA_ELIMINATION
 	  sections (e.g., '.text.init'). Typically '.' in section names
 	  is used to distinguish them from label names / C identifiers.
 
+choice
+	prompt "Kernel linker"
+	default LD_BFD if !LTO_CLANG
+	default LD_GOLD if LTO_CLANG
+	help
+	  This selects the linker that will be used to link the kernel and
+	  its composite objects.
+
+	  Note that using either ld.gold or lld is required for Clang LTO.
+	  ld.bfd will not work.
+
+config LD_BFD
+	bool "bfd"
+	depends on !LTO_CLANG
+	help
+	  Use the standard ld.bfd linker from binutils, which is usually the
+	  default. This linker does not work with Clang LTO.
+
+config LD_GOLD
+	bool "gold"
+	help
+	  Use the alternative ld.gold linker from binutils.
+
+config LD_LLD
+	bool "lld"
+	help
+	  Use the alternative lld linker from LLVM.
+
+endchoice
+
 config LTO
 	def_bool n
 
@@ -634,6 +664,9 @@ config THINLTO
 	help
 	  Use ThinLTO to speed up Link Time Optimization.
 
+config ARCH_SUPPORTS_LTO_GCC
+	bool
+
 choice
 	prompt "Link-Time Optimization (LTO) (EXPERIMENTAL)"
 	default LTO_NONE
@@ -651,6 +684,7 @@ config LTO_CLANG
 	select LTO
 	select THIN_ARCHIVES
 	select LD_DEAD_CODE_DATA_ELIMINATION
+	select LD_GOLD
 	help
           This option enables clang's Link Time Optimization (LTO), which allows
           the compiler to optimize the kernel globally at link time. If you
@@ -662,7 +696,64 @@ config LTO_CLANG
           5.0 (make CC=clang) and GNU gold from binutils >= 2.27, and have the
           LLVMgold plug-in in LD_LIBRARY_PATH.
 
+config LTO_GCC
+	bool "Enable gcc link time optimization (LTO)"
+	depends on ARCH_SUPPORTS_LTO_GCC
+	depends on !GCOV_KERNEL
+	depends on !MODVERSIONS
+	select LTO
+	select THIN_ARCHIVES
+	select LD_DEAD_CODE_DATA_ELIMINATION
+	# lto does not support excluding flags for specific files
+	# right now. Can be removed if that is fixed.
+	#depends on !FUNCTION_TRACER
+	help
+	  With this option gcc will do whole program optimizations for
+	  the whole kernel and module. This increases compile time, but can
+	  lead to better code. It allows gcc to inline functions between
+	  different files and do other optimization.  It might also trigger
+	  bugs due to more aggressive optimization. It allows gcc to drop unused
+	  code. On smaller monolithic kernel configurations
+	  it usually leads to smaller kernels, especially when modules
+	  are disabled.
+
+	  With this option gcc will also do some global checking over
+	  different source files. It also disables a number of kernel
+	  features.
+
+	  This option is recommended for release builds. With LTO
+	  the kernel always has to be re-optimized (but not re-parsed)
+	  on each build.
+
+	  This requires a gcc 6.0 or later compiler.
+
+	  On larger configurations this may need more than 4GB of RAM.
+	  It will likely not work on those with a 32bit compiler.
+
+	  When the toolchain support is not available this will (hopefully)
+	  be automatically disabled.
+
+	  For more information see Documentation/lto-build
 endchoice
+
+config LTO_DEBUG
+	bool "Enable LTO compile time debugging"
+	depends on LTO_GCC
+	help
+	  Enable LTO debugging in the compiler. The compiler dumps
+	  some log files that make it easier to figure out LTO
+	  behavior. The log files also allow to reconstruct
+	  the global inlining and a global callgraph.
+	  They however add some (single threaded) cost to the
+	  compilation.  When in doubt do not enable.
+
+config LTO_CP_CLONE
+	bool "Allow aggressive cloning for function specialization"
+	depends on LTO_GCC
+	help
+	  Allow the compiler to clone and specialize functions for specific
+	  arguments when it determines these arguments are very commonly
+	  called.  Experimential. Will increase text size.
 
 config CFI
 	bool
@@ -691,52 +782,6 @@ config CFI_CLANG_SHADOW
 	help
 	  If you select this option, the kernel builds a fast look-up table of
 	  CFI check functions in loaded modules to reduce overhead.
-
-config ARCH_SUPPORTS_SHADOW_CALL_STACK
-	bool
-	help
-	  An architecture should select this if it supports Clang's Shadow
-	  Call Stack, has asm/scs.h, and implements runtime support for shadow
-	  stack switching.
-
-choice
-	prompt "Return-oriented programming (ROP) protection"
-	default ROP_PROTECTION_NONE
-	help
-	  This option controls kernel protections against return-oriented
-	  programming (ROP) attacks, which involve overwriting function return
-	  addresses.
-
-config ROP_PROTECTION_NONE
-	bool "None"
-
-config SHADOW_CALL_STACK
-	bool "Clang Shadow Call Stack"
-	depends on ARCH_SUPPORTS_SHADOW_CALL_STACK
-	help
-	  This option enables Clang's Shadow Call Stack, which uses a
-	  shadow stack to protect function return addresses from being
-	  overwritten by an attacker. More information can be found from
-	  Clang's documentation:
-
-	    https://clang.llvm.org/docs/ShadowCallStack.html
-
-	  Note that security guarantees in the kernel differ from the ones
-	  documented for user space. The kernel must store addresses of shadow
-	  stacks used by other tasks and interrupt handlers in memory, which
-	  means an attacker capable reading and writing arbitrary memory may
-	  be able to locate them and hijack control flow by modifying shadow
-	  stacks that are not currently in use.
-
-endchoice
-
-config SHADOW_CALL_STACK_VMAP
-	bool "Use virtually mapped shadow call stacks"
-	depends on SHADOW_CALL_STACK
-	help
-	  Use virtually mapped shadow call stacks. Selecting this option
-	  provides better stack exhaustion protection, but increases per-thread
-	  memory consumption as a full page is allocated for each shadow stack.
 
 config HAVE_ARCH_WITHIN_STACK_FRAMES
 	bool
@@ -1099,19 +1144,5 @@ config HAVE_ARCH_COMPILER_H
 	  asm/compiler.h header that should be included after
 	  linux/compiler-*.h in order to override macro definitions that those
 	  headers generally provide.
-
-# Select if the architecture has support for applying RELR relocations.
-config ARCH_HAS_RELR
-	bool
-
-config RELR
-	bool "Use RELR relocation packing"
-	depends on ARCH_HAS_RELR && TOOLS_SUPPORT_RELR
-	default y
-	help
-	  Store the kernel's dynamic relocations in the RELR relocation packing
-	  format. Requires a compatible linker (LLD supports this feature), as
-	  well as compatible NM and OBJCOPY utilities (llvm-nm and llvm-objcopy
-	  are compatible).
 
 source "kernel/gcov/Kconfig"

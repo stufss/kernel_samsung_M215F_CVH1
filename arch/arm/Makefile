@@ -39,10 +39,7 @@ KBUILD_CFLAGS	+= $(call cc-option,-mno-unaligned-access)
 endif
 
 ifeq ($(CONFIG_FRAME_POINTER),y)
-KBUILD_CFLAGS	+=-fno-omit-frame-pointer
-ifeq ($(cc-name),gcc)
-KBUILD_CFLAGS += -mapcs -mno-sched-prolog
-endif
+KBUILD_CFLAGS	+=-fno-omit-frame-pointer -mapcs -mno-sched-prolog
 endif
 
 ifeq ($(CONFIG_CPU_BIG_ENDIAN),y)
@@ -116,10 +113,6 @@ endif
 
 ifeq ($(CONFIG_ARM_UNWIND),y)
 CFLAGS_ABI	+=-funwind-tables
-endif
-
-ifeq ($(cc-name),clang)
-CFLAGS_ABI	+= -meabi gnu
 endif
 
 ifeq ($(CONFIG_THUMB2_KERNEL),y)
