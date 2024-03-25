@@ -239,6 +239,7 @@ discard_fq:
 	inet_frag_kill(&fq->q);
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 			IPSTATS_MIB_REASMFAILS);
+//	DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_IPSTATS_MIB_REASMFAILS1);
 err:
 	kfree_skb(skb);
 	return err;
@@ -382,12 +383,14 @@ static int ipv6_frag_rcv(struct sk_buff *skb)
 	}
 
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)), IPSTATS_MIB_REASMFAILS);
+	DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_IPSTATS_MIB_REASMFAILS2);
 	kfree_skb(skb);
 	return -1;
 
 fail_hdr:
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 			IPSTATS_MIB_INHDRERRORS);
+	DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_IPSTATS_MIB_INHDRERRORS17);
 	icmpv6_param_prob(skb, ICMPV6_HDR_FIELD, skb_network_header_len(skb));
 	return -1;
 }

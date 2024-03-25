@@ -893,6 +893,8 @@ static void tcp_v6_send_reset(const struct sock *sk, struct sk_buff *skb)
 #endif
 	int oif;
 
+	DROPDUMP_CLEAR_SKB(skb);
+
 	if (th->rst)
 		return;
 
@@ -1340,6 +1342,7 @@ discard:
 csum_err:
 	TCP_INC_STATS(sock_net(sk), TCP_MIB_CSUMERRORS);
 	TCP_INC_STATS(sock_net(sk), TCP_MIB_INERRS);
+	DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_TCP_MIB_INERRS5);
 	goto discard;
 
 
@@ -1372,6 +1375,7 @@ ipv6_pktoptions:
 		}
 	}
 
+	DROPDUMP_CLEAR_SKB(opt_skb);
 	kfree_skb(opt_skb);
 	return 0;
 }
@@ -1489,6 +1493,7 @@ process:
 	}
 	if (hdr->hop_limit < inet6_sk(sk)->min_hopcount) {
 		__NET_INC_STATS(net, LINUX_MIB_TCPMINTTLDROP);
+		DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_TCP_MIB_MINTTLDROP1);
 		goto discard_and_relse;
 	}
 
@@ -1537,13 +1542,16 @@ no_tcp_socket:
 	if (tcp_checksum_complete(skb)) {
 csum_error:
 		__TCP_INC_STATS(net, TCP_MIB_CSUMERRORS);
+		DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_TCP_MIB_CSUMERRORS1);
 bad_packet:
 		__TCP_INC_STATS(net, TCP_MIB_INERRS);
+		DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_TCP_MIB_INERRS6);
 	} else {
 		tcp_v6_send_reset(NULL, skb);
 	}
 
 discard_it:
+	DROPDUMP_CHECK_SKB(skb);
 	kfree_skb(skb);
 	return 0;
 
