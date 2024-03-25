@@ -61,6 +61,7 @@ struct bio {
 						 */
 	unsigned short		bi_flags;	/* status, etc and bvec pool number */
 	unsigned short		bi_ioprio;
+	unsigned short          bi_sec_flags;   /* SEC only */
 	unsigned short		bi_write_hint;
 	blk_status_t		bi_status;
 	u8			bi_partno;
@@ -83,6 +84,10 @@ struct bio {
 	bio_end_io_t		*bi_end_io;
 
 	void			*bi_private;
+#ifdef CONFIG_BLK_DEV_CRYPT
+	void			*bi_cryptd;
+#endif
+
 #ifdef CONFIG_BLK_CGROUP
 	/*
 	 * Optional ioc and css associated with this bio.  Put on bio
@@ -125,6 +130,9 @@ struct bio {
 
 #define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
 
+#define __SEC_BYPASS   (0)
+#define SEC_BYPASS     (1ULL << __SEC_BYPASS)
+
 /*
  * bio flags
  */
@@ -133,13 +141,12 @@ struct bio {
 #define BIO_BOUNCED	3	/* bio is a bounce bio */
 #define BIO_USER_MAPPED 4	/* contains user pages */
 #define BIO_NULL_MAPPED 5	/* contains invalid user pages */
-#define BIO_WORKINGSET	6	/* contains userspace workingset pages */
-#define BIO_QUIET	7	/* Make BIO Quiet */
-#define BIO_CHAIN	8	/* chained bio, ->bi_remaining in effect */
-#define BIO_REFFED	9	/* bio has elevated ->bi_cnt */
-#define BIO_THROTTLED	10	/* This bio has already been subjected to
+#define BIO_QUIET	6	/* Make BIO Quiet */
+#define BIO_CHAIN	7	/* chained bio, ->bi_remaining in effect */
+#define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
+#define BIO_THROTTLED	9	/* This bio has already been subjected to
 				 * throttling rules. Don't do it again. */
-#define BIO_TRACE_COMPLETION 11	/* bio_endio() should trace the final completion
+#define BIO_TRACE_COMPLETION 10	/* bio_endio() should trace the final completion
 				 * of this bio. */
 /* See BVEC_POOL_OFFSET below before adding new flags */
 
@@ -228,6 +235,7 @@ enum req_flag_bits {
 	__REQ_INTEGRITY,	/* I/O includes block integrity payload */
 	__REQ_FUA,		/* forced unit access */
 	__REQ_PREFLUSH,		/* request for cache flush */
+	__REQ_CRYPT,		/* request inline crypt */
 	__REQ_RAHEAD,		/* read ahead, can fail anytime */
 	__REQ_BACKGROUND,	/* background IO */
 
@@ -247,6 +255,7 @@ enum req_flag_bits {
 #define REQ_NOMERGE		(1ULL << __REQ_NOMERGE)
 #define REQ_IDLE		(1ULL << __REQ_IDLE)
 #define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
+#define REQ_CRYPT		(1ULL << __REQ_CRYPT)
 #define REQ_FUA			(1ULL << __REQ_FUA)
 #define REQ_PREFLUSH		(1ULL << __REQ_PREFLUSH)
 #define REQ_RAHEAD		(1ULL << __REQ_RAHEAD)

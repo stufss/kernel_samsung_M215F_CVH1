@@ -27,6 +27,7 @@
 #include <linux/percpu-refcount.h>
 #include <linux/scatterlist.h>
 #include <linux/blkzoned.h>
+#include <linux/blk-crypt.h>
 
 struct module;
 struct scsi_ioctl_command;
@@ -45,7 +46,11 @@ struct blk_queue_stats;
 struct blk_stat_callback;
 
 #define BLKDEV_MIN_RQ	4
-#define BLKDEV_MAX_RQ	128	/* Default maximum */
+#ifdef CONFIG_LARGE_DIRTY_BUFFER
+#define BLKDEV_MAX_RQ	256
+#else
+#define BLKDEV_MAX_RQ  128     /* Default maximum */
+#endif
 
 /* Must be consisitent with blk_mq_poll_stats_bkt() */
 #define BLK_MQ_POLL_STATS_BKTS 16
@@ -154,6 +159,9 @@ struct request {
 	unsigned int __data_len;	/* total data len */
 	int tag;
 	sector_t __sector;		/* sector cursor */
+#ifdef CONFIG_BLK_DEV_CRYPT_DUN
+	u64 __dun;                      /* dun for UFS */
+#endif
 
 	struct bio *bio;
 	struct bio *biotail;
@@ -343,6 +351,7 @@ struct queue_limits {
 	unsigned int		max_sectors;
 	unsigned int		max_segment_size;
 	unsigned int		physical_block_size;
+	unsigned int		logical_block_size;
 	unsigned int		alignment_offset;
 	unsigned int		io_min;
 	unsigned int		io_opt;
@@ -353,7 +362,6 @@ struct queue_limits {
 	unsigned int		discard_granularity;
 	unsigned int		discard_alignment;
 
-	unsigned short		logical_block_size;
 	unsigned short		max_segments;
 	unsigned short		max_integrity_segments;
 	unsigned short		max_discard_segments;
@@ -534,6 +542,8 @@ struct request_queue {
 
 	unsigned int		nr_sorted;
 	unsigned int		in_flight[2];
+	unsigned long long  in_flight_time;
+	ktime_t         in_flight_stamp;
 
 	/*
 	 * Number of active block driver functions for which blk_drain_queue()
@@ -575,6 +585,7 @@ struct request_queue {
 	 * for flush operations
 	 */
 	struct blk_flush_queue	*fq;
+	unsigned long		flush_ios;
 
 	struct list_head	requeue_list;
 	spinlock_t		requeue_lock;
@@ -940,6 +951,8 @@ static inline void rq_flush_dcache_pages(struct request *rq)
 }
 #endif
 
+extern void __blk_drain_queue(struct request_queue *q, bool drain_all);
+
 #ifdef CONFIG_PRINTK
 #define vfs_msg(sb, level, fmt, ...)				\
 	__vfs_msg(sb, level, fmt, ##__VA_ARGS__)
@@ -1027,6 +1040,13 @@ static inline sector_t blk_rq_pos(const struct request *rq)
 {
 	return rq->__sector;
 }
+
+#ifdef CONFIG_BLK_DEV_CRYPT_DUN
+static inline sector_t blk_rq_dun(const struct request *rq)
+{
+	return rq->__dun;
+}
+#endif
 
 static inline unsigned int blk_rq_bytes(const struct request *rq)
 {
@@ -1178,7 +1198,7 @@ extern void blk_queue_max_write_same_sectors(struct request_queue *q,
 		unsigned int max_write_same_sectors);
 extern void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
 		unsigned int max_write_same_sectors);
-extern void blk_queue_logical_block_size(struct request_queue *, unsigned short);
+extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
 extern void blk_queue_physical_block_size(struct request_queue *, unsigned int);
 extern void blk_queue_alignment_offset(struct request_queue *q,
 				       unsigned int alignment);
@@ -1394,7 +1414,8 @@ extern int blk_verify_command(unsigned char *cmd, fmode_t has_write_perm);
 enum blk_default_limits {
 	BLK_MAX_SEGMENTS	= 128,
 	BLK_SAFE_MAX_SECTORS	= 255,
-	BLK_DEF_MAX_SECTORS	= 2560,
+	BLK_OPT_MAX_SECTORS	= 1024,
+	BLK_DEF_MAX_SECTORS	= 1024,
 	BLK_MAX_SEGMENT_SIZE	= 65536,
 	BLK_SEG_BOUNDARY_MASK	= 0xFFFFFFFFUL,
 };
@@ -1436,7 +1457,7 @@ static inline unsigned int queue_max_segment_size(struct request_queue *q)
 	return q->limits.max_segment_size;
 }
 
-static inline unsigned short queue_logical_block_size(struct request_queue *q)
+static inline unsigned queue_logical_block_size(struct request_queue *q)
 {
 	int retval = 512;
 
@@ -1446,7 +1467,7 @@ static inline unsigned short queue_logical_block_size(struct request_queue *q)
 	return retval;
 }
 
-static inline unsigned short bdev_logical_block_size(struct block_device *bdev)
+static inline unsigned int bdev_logical_block_size(struct block_device *bdev)
 {
 	return queue_logical_block_size(bdev_get_queue(bdev));
 }
@@ -1738,42 +1759,33 @@ int kblockd_schedule_delayed_work_on(int cpu, struct delayed_work *dwork, unsign
 int kblockd_mod_delayed_work_on(int cpu, struct delayed_work *dwork, unsigned long delay);
 
 #ifdef CONFIG_BLK_CGROUP
-/*
- * This should not be using sched_clock(). A real patch is in progress
- * to fix this up, until that is in place we need to disable preemption
- * around sched_clock() in this function and set_io_start_time_ns().
- */
 static inline void set_start_time_ns(struct request *req)
 {
-	preempt_disable();
-	req->start_time_ns = sched_clock();
-	preempt_enable();
+	req->start_time_ns = ktime_get_ns();
 }
 
 static inline void set_io_start_time_ns(struct request *req)
 {
-	preempt_disable();
-	req->io_start_time_ns = sched_clock();
-	preempt_enable();
+	req->io_start_time_ns = ktime_get_ns();
 }
 
-static inline uint64_t rq_start_time_ns(struct request *req)
+static inline u64 rq_start_time_ns(struct request *req)
 {
         return req->start_time_ns;
 }
 
-static inline uint64_t rq_io_start_time_ns(struct request *req)
+static inline u64 rq_io_start_time_ns(struct request *req)
 {
         return req->io_start_time_ns;
 }
 #else
 static inline void set_start_time_ns(struct request *req) {}
 static inline void set_io_start_time_ns(struct request *req) {}
-static inline uint64_t rq_start_time_ns(struct request *req)
+static inline u64 rq_start_time_ns(struct request *req)
 {
 	return 0;
 }
-static inline uint64_t rq_io_start_time_ns(struct request *req)
+static inline u64 rq_io_start_time_ns(struct request *req)
 {
 	return 0;
 }
@@ -2019,5 +2031,12 @@ static inline int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask,
 }
 
 #endif /* CONFIG_BLOCK */
+
+#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
+#define SIO_PATCH_VERSION(name, major, minor, description)	\
+	static const char *sio_##name##_##major##_##minor __attribute__ ((used, section("sio_patches"))) = (#name " " #major "." #minor " " description)
+#else
+#define SIO_PATCH_VERSION(name, major, minor, description)
+#endif
 
 #endif
