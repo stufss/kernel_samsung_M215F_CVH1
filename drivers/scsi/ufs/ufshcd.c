@@ -4499,6 +4499,7 @@ static int __ufshcd_uic_hibern8_enter(struct ufs_hba *hba)
 		} else {
 			ret = -EAGAIN;
 		}
+	}
 
 	return ret;
 }
