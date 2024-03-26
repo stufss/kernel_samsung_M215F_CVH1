@@ -250,7 +250,9 @@ void fpsimd_restore_current_state(void)
 	if (!system_supports_fpsimd()) {
 		clear_thread_flag(TIF_FOREIGN_FPSTATE);
 		return;
-	preempt_disable();
+        }
+
+        preempt_disable();
 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
 		struct fpsimd_state *st = &current->thread.fpsimd_state;
 
