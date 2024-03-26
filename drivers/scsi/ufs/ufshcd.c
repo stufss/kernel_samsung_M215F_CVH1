@@ -4499,9 +4499,6 @@ static int __ufshcd_uic_hibern8_enter(struct ufs_hba *hba)
 		} else {
 			ret = -EAGAIN;
 		}
-	} else
-		ufshcd_vops_hibern8_notify(hba, UIC_CMD_DME_HIBER_ENTER,
-								POST_CHANGE);
 
 	return ret;
 }
