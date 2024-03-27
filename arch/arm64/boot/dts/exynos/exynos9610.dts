@@ -2997,6 +2997,19 @@
 				};
 			};
 
+			part {
+				/* little cores */
+				coregroup0 {
+					active-ratio-limit = <0x2a>;
+					active-ratio-boost = <0x2b>;
+				};
+				/* big cores */
+				coregroup1 {
+					active-ratio-limit = <0x30>;
+					active-ratio-boost = <0x23>;
+				};
+			};
+
 			prefer-perf-service {
 
 				prefer-perf0 {
@@ -5908,19 +5921,19 @@
 		domain@0 {
 			device_type = "freqvar-tune";
 			shared-cpus = "0-3";
-			boost_table = <0x0>;
-			up_rate_limit_table = <0x5>;
-			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x3c 0xde2b0 0x50>;
+			boost_table = <0xa0 0xde2b0 0x7b 0x12a570 0x68 0x143bb0 0x0>;
+			up_rate_limit_table = <0x4>;
+			down_rate_limit_table = <0x4>;
+            st_table = <0x5>;
 		};
 
 		domain@1 {
 			device_type = "freqvar-tune";
 			shared-cpus = "4-7";
-			boost_table = <0x0>;
-			up_rate_limit_table = <0x5>;
-			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x50>;
+			boost_table = <0xa0 0xe4840 0x7b 0x12a570 0x64>;
+			up_rate_limit_table = <0x4>;
+			down_rate_limit_table = <0x4>;
+			st_table = <0x5>;
 		};
 	};
 
