@@ -46,7 +46,7 @@ echo "  Copying Stuff"
 # Define potential locations for the image binary
 locations=(
   "$PWD/arch/arm64/boot"
-  "$PWD/out/arch/arm64/boot"
+  "$PWD/${out}/arm64/boot"
 )
 
 # Check each location sequentially
