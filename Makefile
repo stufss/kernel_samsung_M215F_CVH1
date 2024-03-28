@@ -966,6 +966,7 @@ endif
 ifdef CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
 KBUILD_CFLAGS_KERNEL	+= $(call cc-option,-ffunction-sections,)
 KBUILD_CFLAGS_KERNEL	+= $(call cc-option,-fdata-sections,)
+LDFLAGS_vmlinux         += -z nostart-stop-gc
 endif
 
 ifdef CONFIG_LTO_CLANG
