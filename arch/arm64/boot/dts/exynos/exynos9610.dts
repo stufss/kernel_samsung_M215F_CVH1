@@ -5909,18 +5909,18 @@
 			device_type = "freqvar-tune";
 			shared-cpus = "0-3";
 			boost_table = <0x0>;
-			up_rate_limit_table = <0x5>;
+			up_rate_limit_table = <0x2>;
 			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x3c 0xde2b0 0x50>;
+			upscale_ratio_table = <0x3c 0x163780 0x50>;
 		};
 
 		domain@1 {
 			device_type = "freqvar-tune";
 			shared-cpus = "4-7";
-			boost_table = <0x0>;
-			up_rate_limit_table = <0x5>;
-			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x50>;
+			boost_table = <0x14 0x14a140 0xa 0x196400 0x5 0x1fbd00 0x0>;
+			up_rate_limit_table = <0x2>;
+			down_rate_limit_table = <0xa>;
+			upscale_ratio_table = <0x4b 0x1702a0 0x50>;
 		};
 	};
 
