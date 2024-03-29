@@ -21,15 +21,9 @@ ccflags-y := -fno-stack-protector
 ccflags-y += -DDISABLE_BRANCH_PROFILING -ffixed-x18
 ccflags-y += $(DISABLE_LTO)
 
-# Force -O2 or -O3 to avoid libgcc dependencies
+# Force -O3 to avoid libgcc dependencies
 CFLAGS_REMOVE_vgettimeofday.o = -pg -Os
-ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3
 CFLAGS_vgettimeofday.o = -O3 -fPIC
-$(info USING O3 WITH VDSO)
-else
-CFLAGS_vgettimeofday.o = -O2 -fPIC
-$(info USING O2 WITH VDSO)
-endif
 ifneq ($(cc-name),clang)
 CFLAGS_vgettimeofday.o += -mcmodel=tiny
 endif
