@@ -11,13 +11,14 @@
 - `Anxiety` set as default i/o scheduler
 - Compiled with `Neutron Clang 18`
 - LLVM Polly
-- `Cortex-a73` Specfic Optmizations
-- Inline Optmizations
+- `Cortex-a53` Specfic Optimizations
+- Inline Optimization
 - All features from `Naz-v1`
 - `Devfreq Boost` is disabled
 - Smooth UI
-- Compiled with `O2` optmization level
+- Compiled with `O3` optmization level
 - Some Debugging Disabled
+- Scheduler Optimizations
 
 #### **Build Instructions**
 
@@ -28,10 +29,9 @@ bash init_clang.sh # Initiliaze Toolchains
 bash build.sh # Build
 ```
 
-Is also Compatible With `Gcc 13` & `Gcc 14` with `CC=gcc`
- 
 ### **Credits** *(kanged everything from these guys)*
 
 - **[`@naz664`](https://github.com/naz664)**
 - **[`@LMAO-armv8`](https://github.com/LMAO-armv8)**
 - **[`@TenSeventy7`](https://github.com/TenSeventy7)**
+- **[`@roynatech2544`](https://github.com/roynatech2544)**
