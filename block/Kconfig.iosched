@@ -106,6 +106,12 @@ choice
 	config DEFAULT_ANXIETY
 		bool "Anxiety" if IOSCHED_ANXIETY=y
 
+    config DEFAULT_MQ_DEADLINE
+	    bool "Deadline-MQ" if MQ_IOSCHED_DEADLINE=y
+
+	config DEFAULT_MQ_KYBER
+	    bool "Kyber" if MQ_IOSCHED_KYBER=y
+
 	config DEFAULT_NOOP
 		bool "No-op"
 
@@ -120,6 +126,8 @@ config DEFAULT_IOSCHED
 	default "sio" if DEFAULT_SIO
 	default "zen" if DEFAULT_ZEN
 	default "anxiety" if DEFAULT_ANXIETY
+	default "deadline-mq" DEFAULT_MQ_DEADLINE
+    default "kyber" DEFAULT_MQ_KYBER
 	default "noop" if DEFAULT_NOOP
 
 config MQ_IOSCHED_DEADLINE
