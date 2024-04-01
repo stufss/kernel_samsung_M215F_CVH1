@@ -127,7 +127,7 @@ config DEFAULT_IOSCHED
 	default "zen" if DEFAULT_ZEN
 	default "anxiety" if DEFAULT_ANXIETY
 	default "deadline-mq" if DEFAULT_MQ_DEADLINE
-    default "kyber" if DEFAULT_MQ_KYBER
+        default "kyber" if DEFAULT_MQ_KYBER
 	default "noop" if DEFAULT_NOOP
 
 config MQ_IOSCHED_DEADLINE
