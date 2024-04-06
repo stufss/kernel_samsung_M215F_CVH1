@@ -12,7 +12,6 @@ jobs:
       matrix:
         include:
           - device: m21
-          - device: m31
     name: "🚧 Build for ${{matrix.device}}"
 
     steps:
@@ -28,7 +27,7 @@ jobs:
           mkdir -p toolchain
           cd toolchain
           echo 'Download antman and sync'
-          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=05012024
           echo 'Patch for glibc'
           bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
           echo 'Done'
@@ -37,7 +36,7 @@ jobs:
         run: |
           
           DEVICE=${{matrix.device}} ./build.sh
-
+          mv AIK/N_*.zip AIK/NK_kr.zip
       - name: Device Name & Config
         run: |
           cat .config | grep CONFIG_LOCALVERSION=
@@ -51,11 +50,11 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          document: AIK/N_KERNEL*.zip
+          document: AIK/N*.zip
           message: "Build COmpleted"
 
       - name: Upload kernel
         uses: actions/upload-artifact@v4
         with:
           name: N_kernel-${{matrix.device}}_Clang_18
-          path: AIK/N_KERNEL.*.zip
+          path: AIK/NK*.zip
