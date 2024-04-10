@@ -576,6 +576,8 @@ ifeq ($(cc-name),clang)
 RETPOLINE_CFLAGS	:= -mretpoline-external-thunk
 RETPOLINE_VDSO_CFLAGS	:= -mretpoline
 endif
+export RETPOLINE_CFLAGS
+export RETPOLINE_VDSO_CFLAGS
 
 ifeq ($(config-targets),1)
 # ===========================================================================
