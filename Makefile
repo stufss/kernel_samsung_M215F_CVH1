@@ -525,7 +525,7 @@ ifneq ($(PLATFORM_VERSION), )
 endif
 
 ifeq ($(cc-name),clang)
-ifneq ($(LLVM_IAS),0)
+ifeq ($(LLVM_IAS),1)
 include scripts/Makefile.clang
 else
 ifneq ($(CROSS_COMPILE),)
