@@ -1,7 +1,6 @@
 PATH=$PWD/toolchain/bin:$PATH
 export LLVM_DIR=$PWD/toolchain/bin
 export LLVM=1
-export LLVM_IAS=1
 
 export ARCH=arm64
 export PLATFORM_VERSION=12
@@ -27,7 +26,6 @@ LLVM_AR='${LLVM_DIR}/llvm-ar'
 LLVM_DIS='${LLVM_DIR}/llvm-dis'
 LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
-LLVM_IAS=1
 '
 
 make distclean
