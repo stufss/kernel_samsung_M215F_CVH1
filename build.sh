@@ -1,6 +1,7 @@
 PATH=$PWD/toolchain/bin:$PATH
 export LLVM_DIR=$PWD/toolchain/bin
 export LLVM=1
+export LLVM_IAS=1
 
 export ARCH=arm64
 export PLATFORM_VERSION=12
@@ -14,9 +15,6 @@ ARGS='
 CC=clang
 LD='${LLVM_DIR}/ld.lld'
 ARCH=arm64
-CROSS_COMPILE='${LLVM_DIR}/aarch64-linux-gnu-'
-CROSS_COMPILE_ARM32='${LLVM_DIR}/arm-linux-gnueabi-'
-CLANG_TRIPLE='${LLVM_DIR}/aarch64-linux-gnu-'
 AR='${LLVM_DIR}/llvm-ar'
 NM='${LLVM_DIR}/llvm-nm'
 AS='${LLVM_DIR}/llvm-as'
@@ -29,6 +27,7 @@ LLVM_AR='${LLVM_DIR}/llvm-ar'
 LLVM_DIS='${LLVM_DIR}/llvm-dis'
 LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
+LLVM_IAS=1
 '
 
 make distclean
