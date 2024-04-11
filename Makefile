@@ -543,11 +543,12 @@ CLANG_FLAGS	+= --gcc-toolchain=$(GCC_TOOLCHAIN)
 endif
 endif
 
-# CC is clang, Turn on integrated AS if CC is clang 13 or later version
-ifeq ($(shell [ $(call __cc-version) -ge 1300 ] && echo 13),)
+# If CC is clang, Always turn on integrated AS
+ifeq ($(LLVM_IAS),0)
 CLANG_FLAGS	+= -no-integrated-as
 else
-LLVM_IAS	?= 1
+LLVM_IAS	:= 1
+CLANG_FLAGS	+= -integrated-as
 endif
 CLANG_FLAGS	+= -Werror=unknown-warning-option
 KBUILD_CFLAGS	+= $(CLANG_FLAGS)
