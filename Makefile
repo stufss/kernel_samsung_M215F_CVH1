@@ -526,7 +526,7 @@ endif
 
 ifeq ($(cc-name),clang)
 ifneq ($(LLVM_IAS),0)
-include $(srctree)/scripts/Makefile.clang
+include scripts/Makefile.clang
 else
 ifneq ($(CROSS_COMPILE),)
 CLANG_TRIPLE	?= $(CROSS_COMPILE)
