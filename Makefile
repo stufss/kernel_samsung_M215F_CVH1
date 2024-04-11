@@ -526,7 +526,7 @@ endif
 
 ifeq ($(cc-name),clang)
 ifeq ($(LLVM_IAS),1)
-include $(srctree)/scripts/Makefile.clang
+include scripts/Makefile.clang
 else
 ifneq ($(CROSS_COMPILE),)
 CLANG_TRIPLE	?= $(CROSS_COMPILE)
@@ -541,7 +541,9 @@ endif
 ifneq ($(GCC_TOOLCHAIN),)
 CLANG_FLAGS	+= --gcc-toolchain=$(GCC_TOOLCHAIN)
 endif
+endif
 
+ifneq ($(LLVM_IAS),1)
 # CC is clang, Turn on integrated AS if CC is clang 14 or later version
 ifeq ($(shell [ $(call __cc-version) -ge 1400 ] && echo 14),)
 CLANG_FLAGS	+= -no-integrated-as
