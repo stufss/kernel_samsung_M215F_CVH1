@@ -10,6 +10,18 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
+submodule init && git submodule update
+
+if [ "$1" = "ksu" ]; then
+ CONFIG_KSU=vendor/ksu.config
+ export KSUS=KSU
+echo "applying patch" 
+git appy ksu.patch
+elif [ "$1" = "no-ksu" ]; then
+CONFIG_KSU=vendor/no-ksu.config
+ export KSUS=N
+fi
+
 ARGS='
 CC=clang
 LD='${LLVM_DIR}/ld.lld'
@@ -70,6 +82,6 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
 cd AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_${DEVICE}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}-${KSUS}.zip * -x .git README.md *placeholder
 cd ..
 echo "  Ready to Flash"
