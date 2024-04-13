@@ -737,21 +737,6 @@ safe_literal_copy:
 			ip += 2;
 			match = op - offset;
 
-			/* Necessarily EOF, due to parsing restrictions */
-			if (!partialDecoding || (cpy == oend))
-				break;
-		} else {
-			/* may overwrite up to WILDCOPYLENGTH beyond cpy */
-			LZ4_wildCopy(op, ip, cpy);
-			ip += length;
-			op = cpy;
-		}
-
-		/* get offset */
-		offset = LZ4_readLE16(ip);
-		ip += 2;
-		match = op - offset;
-
 		/* get matchlength */
 		length = token & ML_MASK;
 
