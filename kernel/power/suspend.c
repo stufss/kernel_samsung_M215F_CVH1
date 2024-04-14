@@ -713,10 +713,13 @@ int pm_suspend(suspend_state_t state)
 #else
 	pr_info("suspend entry (%s)\n", mem_sleep_labels[state]);
 #endif
+#ifdef CONFIG_SEC_DEBUG
 	sec_debug_set_task_in_pm_suspend((uint64_t)current);
+#endif
 	error = enter_state(state);
+#ifdef CONFIG_SEC_DEBUG
 	sec_debug_set_task_in_pm_suspend(0);
-
+#endif
 	if (error) {
 		suspend_stats.fail++;
 		dpm_save_failed_errno(error);
