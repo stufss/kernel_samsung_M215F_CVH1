@@ -10,6 +10,8 @@ if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
 
+export TIME="$(date "+%Y%m%d")"
+
 ARGS='
 CC=clang
 LD=ld.lld
@@ -71,6 +73,6 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
 cd AIK
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_${DEVICE}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}_${TIME}.zip * -x .git README.md *placeholder
 cd ..
 echo "  Ready to Flash"
