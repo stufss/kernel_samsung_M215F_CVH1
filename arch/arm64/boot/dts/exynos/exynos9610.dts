@@ -2604,7 +2604,7 @@
 		samsung,pbus_baaw-syscon-phandle = <0x15>;
 		samsung,wlbt_remap-syscon-phandle = <0x16>;
 		samsung,boot_cfg-syscon-phandle = <0x17>;
-		qos_table = <0x664b8 0x186a0 0x62638 0xe4840 0xf78f0 0x82208 0xde2b0 0x196400 0x1fefc8 0xa2d78 0x1a94b0 0x234f10>;
+		qos_table = <0x664b8 0x186a0 0x62638 0xcb200 0xf78f0 0x82208 0xde2b0 0x196400 0x1fefc8 0xa2d78 0x1a94b0 0x234f10>;
 		smapper_num_banks = <0xb>;
 		smapper_reg = <0x14c40000 0x10000>;
 		linux,phandle = <0x10d>;
@@ -5936,7 +5936,7 @@
 		domain@1 {
 			device_type = "cpufreq-userctrl";
 			shared-cpus = "4-7";
-			user-default-qos = <0xe4840>;
+			user-default-qos = <0xcb200>;
 			user-boost = <0x1>;
 
 			min-limit {
@@ -5982,7 +5982,7 @@
 			sibling-cpus = "4-7";
 			cal-id = <0xb040003>;
 			dm-type = <0x1>;
-			min-freq = <0xe4840>;
+			min-freq = <0xcb200>;
 			pm_qos-min-class = <0x5>;
 			pm_qos-max-class = <0x6>;
 			user-boost = <0x1>;
