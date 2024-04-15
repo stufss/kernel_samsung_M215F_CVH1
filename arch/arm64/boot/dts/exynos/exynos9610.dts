@@ -5936,7 +5936,7 @@
 		domain@1 {
 			device_type = "cpufreq-userctrl";
 			shared-cpus = "4-7";
-			user-default-qos = <0xcb200>;
+			user-default-qos = <0xe4840>;
 			user-boost = <0x1>;
 
 			min-limit {
@@ -5982,7 +5982,7 @@
 			sibling-cpus = "4-7";
 			cal-id = <0xb040003>;
 			dm-type = <0x1>;
-			min-freq = <0xcb200>;
+			min-freq = <0xe4840>;
 			pm_qos-min-class = <0x5>;
 			pm_qos-max-class = <0x6>;
 			user-boost = <0x1>;
