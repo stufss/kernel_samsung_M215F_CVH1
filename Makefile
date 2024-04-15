@@ -526,6 +526,15 @@ ifneq ($(PLATFORM_VERSION), )
 	#$(Q)$(CONFIG_SHELL) $(srctree)/scripts/replace_dir.sh "$(srctree)" "security/selinux" "$(SELINUX_DIR)"
 endif
 
+ifeq ($(CONFIG_DTBO_M21),y)
+DEVICE	:= m21
+else
+ifeq ($(CONFIG_DTBO_M31),y)
+DEVICE	:= m31
+endif
+endif
+export DEVICE
+
 ifeq ($(cc-name),clang)
 include scripts/Makefile.clang
 
