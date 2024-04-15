@@ -1,4 +1,4 @@
-name: stable
+name: build_stable
 
 on:
 
