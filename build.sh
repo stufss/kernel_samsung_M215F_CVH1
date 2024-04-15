@@ -32,8 +32,8 @@ LLVM=1
 
 make distclean
 clear
-make ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config
-make ${ARGS} KCFLAGS=-w -j$(nproc)
+make ${ARGS} ${DEVICE}_defconfig naz.config
+make ${ARGS} -j$(nproc)
 
 echo "  Cleaning Stuff"
 rm -rf AnyKernel3/Image
@@ -74,6 +74,6 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
 cd AnyKernel3
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_${DEVICE}_${TIME}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}-${TIME}.zip * -x .git README.md *placeholder
 cd ..
 echo "  Ready to Flash"
