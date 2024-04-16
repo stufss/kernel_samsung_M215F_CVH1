@@ -526,10 +526,10 @@ ifneq ($(PLATFORM_VERSION), )
 endif
 
 ifeq ($(CONFIG_DTBO_M21),y)
-DEVICE	:= m21
+DEVICE	?= m21
 else
 ifeq ($(CONFIG_DTBO_M31),y)
-DEVICE	:= m31
+DEVICE	?= m31
 endif
 endif
 export DEVICE
