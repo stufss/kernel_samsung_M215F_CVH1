@@ -1,0 +1,57 @@
+name: clang13
+
+on:
+
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - device: m21
+    name: "🚧 Build for ${{matrix.device}}"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: szenius/set-timezone@v1.0
+        with:
+          timezone: "Asia/Kolkata"      
+          
+      - name: Setup Toolchains
+        run: |
+          sudo apt update
+          sudo apt install python3 python-is-python3 -y
+          git clone --depth=1 https://github.com/kdrag0n/proton-clang toolchain
+          
+      - name: Run build
+        run: |
+          
+          DEVICE=${{matrix.device}} ./build.sh
+
+      - name: Device Name & Config
+        run: |
+          cat .config | grep CONFIG_LOCALVERSION=
+          echo ''
+          echo ''
+          echo ''
+          cat .config
+
+      - name: Upload to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          document: AnyKernel3/N*.zip
+          message: "Build COmpleted"
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: N_kernel-${{matrix.device}}_Clang_18
+          path: AnyKernel3/N*.zip
