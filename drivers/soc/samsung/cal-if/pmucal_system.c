@@ -56,8 +56,9 @@ int pmucal_system_enter(int mode)
 
 err_out:
 	dump_stack();
+#ifdef CONFIG_DEBUG_SNAPSHOT
 	s3c2410wdt_set_emergency_reset(0, 0);
-
+#endif
 	return ret;
 }
 
@@ -113,8 +114,9 @@ int pmucal_system_exit(int mode)
 
 err_out:
 	dump_stack();
+#ifdef CONFIG_DEBUG_SNAPSHOT
 	s3c2410wdt_set_emergency_reset(0, 0);
-
+#endif
 	return ret;
 }
 
@@ -173,8 +175,9 @@ int pmucal_system_earlywakeup(int mode)
 
 err_out:
 	dump_stack();
+#ifdef CONFIG_DEBUG_SNAPSHOT
 	s3c2410wdt_set_emergency_reset(0, 0);
-
+#endif
 	return ret;
 }
 
