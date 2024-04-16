@@ -2472,14 +2472,14 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	unsigned long ap, fp;
 	enum lru_list lru;
 
+#ifdef CONFIG_OPLUS_MM_HACKS
+        unsigned long totalswap = total_swap_pages;
+#endif /*CONFIG_OPLUS_MM_HACKS*/
+
         if (is_kanond(sc)) {
                 scan_balance = SCAN_ANON;
                 goto out;
         }
-
-#ifdef CONFIG_OPLUS_MM_HACKS
-	unsigned long totalswap = total_swap_pages;
-#endif /*CONFIG_OPLUS_MM_HACKS*/
 
 #ifdef CONFIG_OPLUS_MM_HACKS
 	if (!current_is_kswapd())
