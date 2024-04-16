@@ -44,6 +44,7 @@ static int try_to_freeze_tasks(bool user_only)
 #ifdef CONFIG_PM_SLEEP
 	char suspend_abort[MAX_SUSPEND_ABORT_LEN];
 #endif
+#ifdef CONFIG_SEC_DEBUG
 	char *sys_state[SYSTEM_END] = {
 		"BOOTING",
 		"SCHEDULING",
@@ -52,6 +53,7 @@ static int try_to_freeze_tasks(bool user_only)
 		"POWER_OFF",
 		"RESTART",
 	};
+#endif
 
 	start = ktime_get_boottime();
 
