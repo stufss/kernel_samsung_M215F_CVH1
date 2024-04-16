@@ -2373,8 +2373,8 @@ write_tag_3_packet(char *dest, size_t *remaining_bytes,
 	struct crypto_skcipher *tfm;
 	struct skcipher_request *req;
 	int rc = 0;
+        char *iv = NULL;
 #ifdef CONFIG_CRYPTO_FIPS
-    char *iv = NULL;
 	char *hash_key = NULL;
 #endif
 	(*packet_size) = 0;
@@ -2537,7 +2537,7 @@ write_tag_3_packet(char *dest, size_t *remaining_bytes,
 	}
 #endif
 	skcipher_request_set_crypt(req, src_sg, dst_sg,
-				   (*key_rec).enc_key_size, NULL);
+				   (*key_rec).enc_key_size, iv);
 	rc = crypto_skcipher_encrypt(req);
 	mutex_unlock(tfm_mutex);
 	skcipher_request_free(req);
