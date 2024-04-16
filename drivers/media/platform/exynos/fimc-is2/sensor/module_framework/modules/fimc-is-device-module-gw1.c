@@ -235,9 +235,6 @@ static int __init sensor_module_gw1_probe(struct platform_device *pdev)
 {
 	int ch, t;
 	int ret = 0;
-#ifdef USE_AP_PDAF
-	int ch, t;
-#endif
 	bool use_pdaf = false;
 	struct fimc_is_core *core;
 	struct v4l2_subdev *subdev_module;
