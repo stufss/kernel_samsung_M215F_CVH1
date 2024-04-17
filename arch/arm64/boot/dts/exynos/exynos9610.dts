@@ -5911,7 +5911,7 @@
 			boost_table = <0x0>;
 			up_rate_limit_table = <0x5>;
 			down_rate_limit_table = <0x5>;
-			upscale_ratio_table = <0x3c 0x163780 0x50>;
+			upscale_ratio_table = <0x3c 0x143bb0 0x46 0x18fe70 0x50>;
 		};
 
 		domain@1 {
