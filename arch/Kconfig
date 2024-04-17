@@ -755,6 +755,12 @@ config LTO_CP_CLONE
 	  arguments when it determines these arguments are very commonly
 	  called.  Experimential. Will increase text size.
 
+config BUILD_DTBO
+       bool "Build exynos_dtbo.img"
+       default n
+       help
+         Allow exynos_dtbo.img to be built
+
 config CFI
 	bool
 

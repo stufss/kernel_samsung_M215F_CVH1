@@ -193,8 +193,9 @@ KBUILD_IMAGE	:= $(boot)/Image.gz
 endif
 
 KBUILD_DTBS	:= dtbs
-
+ifeq ($(CONFIG_BUILD_DTBO),y)
 KBUILD_DTBO_EXYNOS_IMG := dtbo_exynos.img
+endif
 KBUILD_DTB_EXYNOS_IMG := dtb_exynos.img
 
 all:	Image $(KBUILD_DTBS) $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_KERNEL_IMAGE_NAME))
@@ -228,11 +229,12 @@ Image-dtb: vmlinux scripts dtbs
 Image.gz-dtb: vmlinux scripts dtbs Image.gz
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 
+ifeq ($(CONFIG_BUILD_DTBO),y)
 $(KBUILD_DTBO_EXYNOS_IMG): dtbs
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 
 all: $(KBUILD_DTBO_EXYNOS_IMG)
-
+endif
 $(KBUILD_DTB_EXYNOS_IMG): dtbs
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 

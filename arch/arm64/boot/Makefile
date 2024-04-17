@@ -18,8 +18,11 @@ include $(srctree)/arch/arm64/boot/dts/Makefile
 
 OBJCOPYFLAGS_Image :=-O binary -R .note -R .note.gnu.build-id -R .comment -S
 
+ifeq ($(CONFIG_BUILD_DTBO),y)
 targets := Image Image.gz dtbo_exynos.img dtb_exynos.img
-
+else
+targets := Image Image.gz dtb_exynos.img
+endif
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES))
 ifneq ($(DTB_NAMES),)
 DTB_LIST := $(addsuffix .dtb,$(DTB_NAMES))
@@ -27,8 +30,9 @@ else
 DTB_LIST := $(dtb-y) $(dtbo-y)
 endif
 DTB_OBJS := $(addprefix $(obj)/dts/,$(DTB_LIST))
-
+ifeq ($(CONFIG_BUILD_DTBO),y)
 DTBO_OBJS_EXYNOS := $(shell find $(obj)/dts/samsung -name \*.dtbo)
+endif
 DTB_OBJS_EXYNOS := $(shell find $(obj)/dts/exynos -name \*.dtb)
 
 $(obj)/Image: vmlinux FORCE
@@ -54,10 +58,10 @@ $(obj)/Image.lzo: $(obj)/Image FORCE
 
 $(obj)/Image.gz-dtb: $(obj)/Image.gz $(DTB_OBJS) FORCE
 	$(call if_changed,cat)
-
+ifeq ($(CONFIG_BUILD_DTBO),y)
 $(obj)/dtbo_exynos.img: $(DTBO_OBJS_EXYNOS) FORCE
 	$(call if_changed,mkdtimg)
-
+endif
 $(obj)/dtb_exynos.img: $(DTB_OBJS_EXYNOS) FORCE
 	$(call if_changed,mkdtbimg)
 
