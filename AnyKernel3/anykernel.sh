@@ -35,8 +35,7 @@ set_perm_recursive 0 0 755 644 $ramdisk/*;
 set_perm_recursive 0 0 750 750 $ramdisk/init* $ramdisk/sbin;
 
 # boot install
-split_boot;
-ui_print "- Installing Kernel";
+dump_boot;
 
-flash_boot;
+write_boot;
 ui_print "- BootLoop Soon";
