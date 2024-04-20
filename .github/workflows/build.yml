@@ -41,14 +41,6 @@ jobs:
           
           DEVICE=${{matrix.device}} ./build.sh
 
-      - name: Device Name & Config
-        run: |
-          cat .config | grep CONFIG_LOCALVERSION=
-          echo ''
-          echo ''
-          echo ''
-          cat .config
-
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
         with:
