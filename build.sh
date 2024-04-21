@@ -33,8 +33,8 @@ KCFLAGS=-Wno-address-of-packed-member
 
 make distclean
 clear
-make ${ARGS} ${DEVICE}_defconfig naz.config
-make ${ARGS} -j$(nproc)
+make O=out ${ARGS} ${DEVICE}_defconfig naz.config
+make O=out ${ARGS} -j$(nproc)
 
 echo "  Cleaning Stuff"
 rm -rf AnyKernel3/Image
@@ -65,9 +65,9 @@ if ! $found; then
   exit 1
 fi
 
-cp -r arch/arm64/boot/Image AnyKernel3/Image
-cp -r .config AnyKernel3/config
-cp -r arch/arm64/boot/dtb_exynos.img AnyKernel3/dtb
+cp -r out/arch/arm64/boot/Image AnyKernel3/Image
+cp -r out/.config AnyKernel3/config
+cp -r out/arch/arm64/boot/dtb_exynos.img AnyKernel3/dtb
 echo "  done"
 echo ""
 kver=$(make kernelversion)
