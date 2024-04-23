@@ -273,8 +273,7 @@ int select_energy_cpu(struct task_struct *p, int prev_cpu, int sd_flag, int sync
 		return -1;
 
 	if (sysctl_sched_sync_hint_enable && sync)
-		if (cpumask_test_cpu(cpu, &p->cpus_allowed) &&
-		    is_cpu_preemptible(p, prev_cpu, cpu, sync))
+		if (cpumask_test_cpu(cpu, &p->cpus_allowed))
 			return cpu;
 
 	/*
