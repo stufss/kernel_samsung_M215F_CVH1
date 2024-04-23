@@ -43,7 +43,6 @@ extern unsigned long task_util_est(struct task_struct *p);
 extern unsigned int get_cpu_mips(unsigned int cpu);
 extern unsigned int get_cpu_max_capacity(unsigned int cpu);
 
-extern unsigned long capacity_curr_of(int cpu);
 extern unsigned long boosted_task_util(struct task_struct *p);
 
 static inline struct task_struct *task_of(struct sched_entity *se)
