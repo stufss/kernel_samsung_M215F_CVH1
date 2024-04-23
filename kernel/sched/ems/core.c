@@ -150,8 +150,7 @@ bool is_cpu_preemptible(struct task_struct *p, int prev_cpu, int cpu, int sync)
 #ifdef CONFIG_SCHED_TUNE
 	struct task_struct *curr = READ_ONCE(rq->curr);
 
-	if (!is_slowest_cpu(cpu) &&
-	    curr && schedtune_prefer_perf(curr) > 0)
+	if (curr && schedtune_prefer_perf(curr) > 0)
 		return false;
 #endif
 
