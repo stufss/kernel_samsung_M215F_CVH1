@@ -22,8 +22,8 @@ jobs:
 
       - uses: szenius/set-timezone@v1.0
         with:
-          timezone: "Asia/Kolkata"      
-          
+          timezone: "Asia/Kolkata"
+
       - name: Setup Toolchains
         run: |
           sudo apt update
@@ -35,11 +35,11 @@ jobs:
           echo 'Patch for glibc'
           bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
           echo 'Done'
-          
+
       - name: Run build
         run: |
-          
-          DEVICE=${{matrix.device}} ./build.sh
+
+          DEVICE=${{matrix.device}} KSU=1 ./build.sh
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
