@@ -40,7 +40,7 @@ jobs:
       - name: Run build
         run: |
 
-          DEVICE=${{matrix.device}} ./build.sh
+          DEVICE=${{matrix.device}} KSU=1 ./build.sh
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
