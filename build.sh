@@ -1,3 +1,7 @@
+[ ! -e "KernelSU/kernel/setup.sh" ] && git submodule init && git submodule update
+
+export KBUILD_BUILD_USER=ghazzor
+
 PATH=$PWD/toolchain/bin:$PATH
 export LLVM_DIR=$PWD/toolchain/bin
 export LLVM=1
@@ -9,6 +13,18 @@ export ANDROID_MAJOR_VERSION=s
 if [ -z "$DEVICE" ]; then
 export DEVICE=m21
 fi
+
+if [[ -z "$KSU" || "$KSU" = "0" ]]; then
+KSU=0
+export KSUSTAT=-
+elif [ "$KSU" = "1" ]; then
+CONFIG_KSU=ksu.config
+export KSUSTAT=_KSU-
+else
+echo "Error: Set KSU to 0 or 1 to build"
+exit 1
+fi
+export KSU
 
 export TIME="$(date "+%Y%m%d")"
 
@@ -33,7 +49,7 @@ LLVM=1
 make distclean
 clear
 rm -rf out
-make O=out ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config
+make O=out ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
 make O=out ${ARGS} KCFLAGS=-w -j$(nproc)
 
 echo "  Cleaning Stuff"
@@ -73,6 +89,6 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
 cd AnyKernel3
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_${DEVICE}_${TIME}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}${KSUSTAT}${TIME}.zip * -x .git README.md *placeholder
 cd ..
 echo "  Ready to Flash"
