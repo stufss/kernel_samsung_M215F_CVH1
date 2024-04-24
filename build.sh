@@ -1,5 +1,6 @@
 #!/bin/bash
 [ ! -e "KernelSU/kernel/setup.sh" ] && git submodule init && git submodule update
+echo "patching kernelsu...."
 bash scripts/ksu_patch_samsung.sh
 
 export KBUILD_BUILD_USER=ghazzor
@@ -27,6 +28,16 @@ exit 1
 fi
 export KSU
 
+if [[ -z "$CB" || "$CB" = "y" ]]; then
+echo "Clean Build"
+rm -rf out
+elif [ "$CB" = "n" ]; then
+echo "Dirty Build"
+else
+echo "Error: Set CB to y or n to build"
+exit 1
+fi
+
 export TIME="$(date "+%Y%m%d")"
 
 ARGS='
@@ -49,9 +60,8 @@ LLVM_DIS='${LLVM_DIR}/llvm-dis'
 LLVM_NM='${LLVM_DIR}/llvm-nm'
 '
 
-rm -rf out
-make O=out ${ARGS} ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
-make O=out ${ARGS} -j$(nproc)
+make ${ARGS} O=out ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
+make ${ARGS} O=out -j$(nproc)
 
 echo "  Cleaning Stuff"
 rm -rf AnyKernel3/Image
@@ -92,4 +102,14 @@ cd AnyKernel3
 rm -rf N_KERNEL.*.zip
 zip -r1 N_KERNEL.${kmod}_${DEVICE}${KSUSTAT}${TIME}.zip * -x .git README.md *placeholder
 cd ..
-echo "  Ready to Flash"
+
+if [[ -z "$AUTO" || "$AUTO" = "0" ]]; then
+echo " ZIP Ready to Flash"
+elif [ "$AUTO" = "1" ]; then
+echo "make sure adb debugging is enaled and device has a custom recovery"
+echo "flashing kernel , no need to reboot into recovery...."
+bash flash.sh
+else
+echo "Error: Set AUTO to 0 or 1 to flash"
+exit 1
+fi
