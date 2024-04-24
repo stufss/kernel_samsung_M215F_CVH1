@@ -1,4 +1,5 @@
 [ ! -e "KernelSU/kernel/setup.sh" ] && git submodule init && git submodule update
+bash scripts/ksu_patch_samsung.sh
 
 export KBUILD_BUILD_USER=ghazzor
 
