@@ -22,7 +22,7 @@ jobs:
 
       - uses: szenius/set-timezone@v1.0
         with:
-          timezone: "Asia/Kolkata"
+          timezoneLinux: "Asia/Kolkata"
 
       - name: Setup Toolchains
         run: |
@@ -39,7 +39,7 @@ jobs:
       - name: Run build
         run: |
 
-          DEVICE=${{matrix.device}} KSU=0 ./build.sh
+          DEVICE=${{matrix.device}} KSU=1 ./build.sh
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
