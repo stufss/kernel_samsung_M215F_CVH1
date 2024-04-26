@@ -41,6 +41,12 @@ jobs:
 
           DEVICE=${{matrix.device}} KSU=1 ./build.sh
 
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: N_kernel-${{matrix.device}}_Clang_18
+          path: AnyKernel3/N*.zip
+
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
         with:
@@ -48,9 +54,3 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           document: AnyKernel3/N*.zip
           message: "Build COmpleted"
-
-      - name: Upload kernel
-        uses: actions/upload-artifact@v4
-        with:
-          name: N_kernel-${{matrix.device}}_Clang_18
-          path: AnyKernel3/N*.zip
