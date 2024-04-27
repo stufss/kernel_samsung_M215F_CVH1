@@ -56,7 +56,6 @@ LLVM_AR='${LLVM_DIR}/llvm-ar'
 LLVM_DIS='${LLVM_DIR}/llvm-dis'
 LLVM_NM='${LLVM_DIR}/llvm-nm'
 LLVM=1
-KCFLAGS=-Wno-address-of-packed-member
 '
 
 clear
