@@ -289,7 +289,7 @@ p_err:
 
 int sensor_gm2_cis_GGC_write(struct v4l2_subdev *subdev)
 {
-	int ret = 0, i;
+	int ret = 0;
 	struct fimc_is_cis *cis;
 	struct i2c_client *client = NULL;
 
