@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # Define Search Directory
 search_dir="KernelSU/kernel"
 
