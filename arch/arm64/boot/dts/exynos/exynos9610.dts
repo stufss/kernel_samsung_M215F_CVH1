@@ -5861,7 +5861,7 @@
 		gpu_pmqos_mif_max_clock = <0x1fefc8>;
 		gpu_pmqos_mif_max_clock_base = <0x8ba60>;
 		gpu_cl_dvfs_start_base = <0x8ba60>;
-		gpu_debug_level = <0x3>;
+		gpu_debug_level = <0x4>;
 		gpu_trace_level = <0x8>;
 		gpu_bts_support = <0x1>;
 		gpu_mo_min_clock = <0xba860>;
