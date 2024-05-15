@@ -2591,11 +2591,6 @@ struct zs_pool *zs_create_pool(const char *name)
 	if (zs_register_migration(pool))
 		goto err;
 
-	if (!g_pool)
-		g_pool = pool;
-
-	register_on_app_mmput_callback(try_schedule_zs_compact);
-
 	/*
 	 * Not critical, we still can use the pool
 	 * and user can trigger compaction manually.
