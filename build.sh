@@ -60,8 +60,8 @@ LLVM=1
 
 clear
 rm -rf out
-make O=out ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
-make O=out ${ARGS} KCFLAGS=-w -j$(nproc)
+make O=out ${ARGS} ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
+make O=out ${ARGS} -j$(nproc)
 
 echo "  Cleaning Stuff"
 rm -rf AnyKernel3/Image
