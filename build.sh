@@ -33,12 +33,12 @@ LLVM=1
 make distclean
 clear
 rm -rf out
-make O=out ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ${DEVICE}_defconfig naz.config
-make O=out ${ARGS} KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y -j$(nproc)
+make O=out ${ARGS} KCFLAGS=-w ${DEVICE}_defconfig naz.config
+make O=out ${ARGS} KCFLAGS=-w -j$(nproc)
 
 echo "  Cleaning Stuff"
-rm -rf AIK/Image
-rm -rf config
+rm -rf AnyKernel3/Image
+rm -rf AnyKernel3/config
 echo "  done"
 echo ""
 echo "  Copying Stuff"
@@ -60,18 +60,18 @@ done
 
 # Handle the case where image binary wasn't found
 if ! $found; then
-  echo "  ERROR : image binary not found in any of the specified locations!"
+  echo "  ERROR : image binary not found in any of the specified locations , fix compile!"
   exit 1
 fi
 
-cp -r out/arch/arm64/boot/Image AIK/Image
-cp -r out/.config AIK/config
+cp -r out/arch/arm64/boot/Image AnyKernel3/Image
+cp -r out/.config AnyKernel3/config
 echo "  done"
 echo ""
 kver=$(make kernelversion)
 kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
-cd AIK
+cd AnyKernel3
 rm -rf N_KERNEL.*.zip
 zip -r1 N_KERNEL.${kmod}_${DEVICE}_${TIME}.zip * -x .git README.md *placeholder
 cd ..

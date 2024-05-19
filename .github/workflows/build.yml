@@ -23,12 +23,12 @@ jobs:
 
       - uses: szenius/set-timezone@v1.0
         with:
-          timezone: "Asia/Kolkata"      
-          
+          timezoneLinux: "Asia/Kolkata"
+
       - name: Setup Toolchains
         run: |
           sudo apt update
-          sudo apt install bison flex libssl-dev libarchive-tools -y
+          sudo apt install bison flex libssl-dev python3 python-is-python3 libarchive-tools -y
           mkdir -p toolchain
           cd toolchain
           echo 'Download antman and sync'
@@ -36,30 +36,22 @@ jobs:
           echo 'Patch for glibc'
           bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
           echo 'Done'
-          
+
       - name: Run build
         run: |
-          
-          DEVICE=${{matrix.device}} ./build.sh
 
-      - name: Device Name & Config
-        run: |
-          cat .config | grep CONFIG_LOCALVERSION=
-          echo ''
-          echo ''
-          echo ''
-          cat .config
+          DEVICE=${{matrix.device}} ./build.sh
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          document: AIK/N_KERNEL*.zip
+          document: AnyKernel3/N*.zip
           message: "Build COmpleted"
 
       - name: Upload kernel
         uses: actions/upload-artifact@v4
         with:
           name: N_kernel-${{matrix.device}}_Clang_18
-          path: AIK/N_KERNEL.*.zip
+          path: AnyKernel3/N*.zip
