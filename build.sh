@@ -7,7 +7,7 @@ export KBUILD_BUILD_USER=ghazzor
 PATH=$PWD/toolchain/bin:$PATH
 export LLVM_DIR=$PWD/toolchain/bin
 export LLVM=1
-
+export HASH=$(git rev-parse --short HEAD)
 export ARCH=arm64
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
@@ -100,7 +100,7 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
 cd AnyKernel3
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_${DEVICE}${KSUSTAT}${TIME}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}${KSUSTAT}${TIME}_${HASH}.zip * -x .git README.md *placeholder
 cd ..
 
 if [[ -z "$AUTO" || "$AUTO" = "0" ]]; then
