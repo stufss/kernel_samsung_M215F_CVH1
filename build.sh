@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 [ ! -e "KernelSU/kernel/setup.sh" ] && git submodule init && git submodule update
 [ ! -d "toolchain" ] && echo  "installing toolchain..." && bash init_clang.sh
 echo "patching kernelsu...."
