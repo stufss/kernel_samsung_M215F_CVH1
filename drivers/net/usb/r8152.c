@@ -7414,14 +7414,21 @@ static void rtl8152_disconnect(struct usb_interface *intf)
 	}
 }
 
-#define REALTEK_USB_DEVICE_INTERFACE_CLASS(vend, prod)	\
-	USB_DEVICE_INTERFACE_CLASS(vend, prod, USB_CLASS_VENDOR_SPEC)
-
-
-#define REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(vend, prod)	\
-	USB_DEVICE_AND_INTERFACE_INFO(vend, prod, USB_CLASS_COMM, \
-				      USB_CDC_SUBCLASS_ETHERNET, \
-				      USB_CDC_PROTO_NONE) \
+#define REALTEK_USB_DEVICE(vend, prod)	\
+	.match_flags = USB_DEVICE_ID_MATCH_DEVICE | \
+		       USB_DEVICE_ID_MATCH_INT_CLASS, \
+	.idVendor = (vend), \
+	.idProduct = (prod), \
+	.bInterfaceClass = USB_CLASS_VENDOR_SPEC \
+}, \
+{ \
+	.match_flags = USB_DEVICE_ID_MATCH_INT_INFO | \
+		       USB_DEVICE_ID_MATCH_DEVICE, \
+	.idVendor = (vend), \
+	.idProduct = (prod), \
+	.bInterfaceClass = USB_CLASS_COMM, \
+	.bInterfaceSubClass = USB_CDC_SUBCLASS_ETHERNET, \
+	.bInterfaceProtocol = USB_CDC_PROTO_NONE
 
 /* table of devices that work with this driver */
 static const struct usb_device_id rtl8152_table[] = {
@@ -7458,9 +7465,7 @@ static struct usb_driver rtl8152_driver = {
 	.pre_reset =	rtl8152_pre_reset,
 	.post_reset =	rtl8152_post_reset,
 	.supports_autosuspend = 1,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
 	.disable_hub_initiated_lpm = 1,
-#endif
 };
 
 module_usb_driver(rtl8152_driver);
