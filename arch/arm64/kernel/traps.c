@@ -241,10 +241,6 @@ void dump_backtrace_auto_summary(struct pt_regs *regs, struct task_struct *tsk)
 			break;
 		if (in_entry_text(frame.pc)) {
 			stack = frame.fp - offsetof(struct pt_regs, stackframe);
-
-			if (on_accessible_stack(tsk, stack))
-				dump_mem("", "Exception stack", stack,
-					 stack + sizeof(struct pt_regs));
 		}
 		cnt++;
 	}
