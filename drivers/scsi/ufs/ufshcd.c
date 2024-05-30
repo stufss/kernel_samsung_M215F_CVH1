@@ -6969,6 +6969,7 @@ static int ufshcd_reset_and_restore(struct ufs_hba *hba)
 {
 	int err = 0;
 	int retries = MAX_HOST_RESET_RETRIES;
+	unsigned long flags;
 
 	int tag;
 
