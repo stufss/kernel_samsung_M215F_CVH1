@@ -233,7 +233,6 @@
 		(*_d >> _to_shift) != _a);				\
 })
 
-
 /**
  * array_size() - Calculate size of 2-dimensional array.
  *
