@@ -22,10 +22,13 @@ jobs:
           sudo chown -R $USER:$USER /mnt/ramdisk
 
       - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          path: /mnt/ramdisk/repo
+        run: |
+          git clone --branch $BRANCH_NAME $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git /mnt/ramdisk/repo
+        env:
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
 
       - uses: szenius/set-timezone@v2.0
         with:
