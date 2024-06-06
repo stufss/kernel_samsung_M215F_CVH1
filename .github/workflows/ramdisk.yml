@@ -61,7 +61,7 @@ jobs:
 
       - name: Run build
         run: |
-
+          cd /mnt/ramdisk/repo 
           DEVICE=${{matrix.device}} KSU=1 ./build.sh
 
       - name: Upload kernel
