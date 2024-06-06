@@ -1278,134 +1278,35 @@ static int ncm_unwrap_ntb(struct gether *port,
 	dg_len2 = get_ncm(&tmp, opts->dgram_item_len);
 	dgram_counter = 0;
 
-	do {
-		/*
-		 * NCM 3.2
-		 * dwNdpIndex
-		 */
-		if (((ndp_index % 4) != 0) ||
-				(ndp_index < opts->nth_size) ||
-				(ndp_index > (block_len -
-					      opts->ndp_size))) {
-			INFO(port->func.config->cdev, "Bad index: %#X\n",
-			     ndp_index);
+do {
+		index = index2;
+		dg_len = dg_len2;
+		if (dg_len < 14 + crc_len) { /* ethernet header + crc */
+			INFO(port->func.config->cdev, "Bad dgram length: %x\n",
+			     dg_len);
 			goto err;
 		}
-		if (ndp_index == opts->nth_size)
-			ndp_after_header = true;
+		if (ncm->is_crc) {
+			uint32_t crc, crc2;
 
-		/*
-		 * walk through NDP
-		 * dwSignature
-		 */
-		tmp = (void *)(skb->data + ndp_index);
-		if (get_unaligned_le32(tmp) != ncm->ndp_sign) {
-			INFO(port->func.config->cdev, "Wrong NDP SIGN\n");
-			goto err;
+			crc = get_unaligned_le32(skb->data +
+						 index + dg_len - crc_len);
+			crc2 = ~crc32_le(~0,
+					 skb->data + index,
+					 dg_len - crc_len);
+			if (crc != crc2) {
+				INFO(port->func.config->cdev, "Bad CRC\n");
+				goto err;
+			}
 		}
 
-		ndp_len = get_unaligned_le16(tmp++);
-		/*
-		 * NCM 3.3.1
-		 * wLength
-		 * entry is 2 items
-		 * item size is 16/32 bits, opts->dgram_item_len * 2 bytes
-		 * minimal: struct usb_cdc_ncm_ndpX + normal entry + zero entry
-		 * Each entry is a dgram index and a dgram length.
-		 */
-		if ((ndp_len < opts->ndp_size
-				+ 2 * 2 * (opts->dgram_item_len * 2)) ||
-				(ndp_len % opts->ndplen_align != 0)) {
-			INFO(port->func.config->cdev, "Bad NDP length: %#X\n",
-			     ndp_len);
-			goto err;
-		}
-		tmp += opts->reserved1;
-		/* Check for another NDP (d)wNextNdpIndex */
-		ndp_index = get_ncm(&tmp, opts->next_ndp_index);
-		tmp += opts->reserved2;
-
-		ndp_len -= opts->ndp_size;
 		index2 = get_ncm(&tmp, opts->dgram_item_len);
 		dg_len2 = get_ncm(&tmp, opts->dgram_item_len);
 
-		do {
-			index = index2;
-			/* wDatagramIndex[0] */
-			if ((index < opts->nth_size) ||
-					(index > block_len - opts->dpe_size)) {
-				INFO(port->func.config->cdev,
-				     "Bad index: %#X\n", index);
-				goto err;
-			}
-
-			dg_len = dg_len2;
-			/*
-			 * wDatagramLength[0]
-			 * ethernet hdr + crc or larger than max frame size
-			 */
-			if ((dg_len < 14 + crc_len) ||
-					(dg_len > frame_max)) {
-				INFO(port->func.config->cdev,
-				     "Bad dgram length: %#X\n", dg_len);
-				goto err;
-			}
-			if (ncm->is_crc) {
-				uint32_t crc, crc2;
-
-				crc = get_unaligned_le32(skb->data +
-							 index + dg_len -
-							 crc_len);
-				crc2 = ~crc32_le(~0,
-						 skb->data + index,
-						 dg_len - crc_len);
-				if (crc != crc2) {
-					INFO(port->func.config->cdev,
-					     "Bad CRC\n");
-					goto err;
-				}
-			}
-
-			index2 = get_ncm(&tmp, opts->dgram_item_len);
-			dg_len2 = get_ncm(&tmp, opts->dgram_item_len);
-
-			if (index2 == 0 || dg_len2 == 0)
-				break;
-
-			/* wDatagramIndex[1] */
-			if (ndp_after_header) {
-				if (index2 < opts->nth_size + opts->ndp_size) {
-					INFO(port->func.config->cdev,
-					     "Bad index: %#X\n", index2);
-					goto err;
-				}
-			} else {
-				if (index2 < opts->nth_size + opts->dpe_size) {
-					INFO(port->func.config->cdev,
-					     "Bad index: %#X\n", index2);
-					goto err;
-				}
-			}
-			if (index2 > block_len - opts->dpe_size) {
-				INFO(port->func.config->cdev,
-				     "Bad index: %#X\n", index2);
-				goto err;
-			}
-
-			/* wDatagramLength[1] */
-			if ((dg_len2 < 14 + crc_len) ||
-					(dg_len2 > frame_max)) {
-				INFO(port->func.config->cdev,
-				     "Bad dgram length: %#X\n", dg_len);
-				goto err;
-			}
-
-			/*
-			 * Copy the data into a new skb.
-			 * This ensures the truesize is correct
-			 */
-			skb2 = netdev_alloc_skb_ip_align(ncm->netdev,
-							 dg_len - crc_len);
+		if (index2 == 0 || dg_len2 == 0) {
+			skb2 = skb;
+		} else {
+			skb2 = skb_clone(skb, GFP_ATOMIC);
 			if (skb2 == NULL)
 				goto err;
 		}
