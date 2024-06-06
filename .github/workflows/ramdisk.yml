@@ -1,8 +1,9 @@
-name: build
+name: ramdisk
 
 on:
 
   workflow_dispatch:
+  push:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,17 +15,27 @@ jobs:
     name: "🚧 Build for ${{matrix.device}}"
 
     steps:
+
+    - name: Set up RAM disk
+      run: |
+        sudo mkdir -p /mnt/ramdisk
+        sudo mount -t tmpfs -o size=4G tmpfs /mnt/ramdisk
+        sudo chown -R $USER:$USER /mnt/ramdisk
+
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          path: /mnt/ramdisk/repo
 
-      - uses: szenius/set-timezone@v1.0
+      - uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Kolkata"
 
       - name: Setup Toolchains
         run: |
+          cd /mnt/ramdisk/repo
+          ls
           sudo apt update
           sudo apt install bison flex libssl-dev python3 python-is-python3 libarchive-tools -y
           mkdir -p toolchain
@@ -44,12 +55,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: N_kernel-${{matrix.device}}_Clang_18
-          path: AnyKernel3/N*.zip
+          path: /mnt/ramdisk/repo/AnyKernel3/N*.zip
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          document: AnyKernel3/N*.zip
+          document: /mnt/ramdisk/repo/AnyKernel3/N*.zip
           message: "Build COmpleted"
