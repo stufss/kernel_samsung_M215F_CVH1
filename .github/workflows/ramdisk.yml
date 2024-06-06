@@ -57,6 +57,8 @@ jobs:
           echo 'Patch for glibc'
           bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
           echo 'Done'
+          echo "BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> local.config
+          echo "CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> local.config
 
       - name: Run build
         run: |
@@ -68,11 +70,4 @@ jobs:
         with:
           name: N_kernel-${{matrix.device}}_Clang_18
           path: /mnt/ramdisk/repo/AnyKernel3/N*.zip
-
-      - name: Upload to Telegram
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          document: /mnt/ramdisk/repo/AnyKernel3/N*.zip
-          message: "Build COmpleted"
+          
