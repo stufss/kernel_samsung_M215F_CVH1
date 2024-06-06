@@ -117,5 +117,4 @@ echo "Error: Set AUTO to 0 or 1 to flash"
 exit 1
 fi
 
-source local.config
 bash tgupload.sh AnyKernel3/N_KERNEL*

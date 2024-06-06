@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source local.config
+
 # File to upload
 FILE="$1"
 
