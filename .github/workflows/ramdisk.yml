@@ -35,7 +35,7 @@ jobs:
 
       - name: Checkout source
         run: |
-          git clone --branch $BRANCH_NAME $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git /mnt/ramdisk/repo
+          git clone --depth=1 --branch $BRANCH_NAME $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git /mnt/ramdisk/repo
         env:
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_REPOSITORY: ${{ github.repository }}
