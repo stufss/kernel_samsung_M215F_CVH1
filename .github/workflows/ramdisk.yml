@@ -57,8 +57,10 @@ jobs:
           echo 'Patch for glibc'
           bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
           echo 'Done'
-          echo "BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> local.config
-          echo "CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> local.config
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> $GITHUB_ENV
+          echo "TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> $GITHUB_ENV
+          echo "BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> local.config
+          echo "CHAT_ID=$TELEGRAM_CHAT_ID" >> local.config
 
       - name: Run build
         run: |
