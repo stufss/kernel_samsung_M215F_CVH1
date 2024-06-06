@@ -48,7 +48,6 @@ jobs:
       - name: Setup Toolchains
         run: |
           cd /mnt/ramdisk/repo
-          ls
           sudo apt update
           sudo apt install bison flex libssl-dev python3 python-is-python3 libarchive-tools -y
           mkdir -p toolchain
