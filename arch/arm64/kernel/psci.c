@@ -71,7 +71,7 @@ static int cpu_psci_cpu_disable(unsigned int cpu)
 static void cpu_psci_cpu_die(unsigned int cpu)
 {
 	u32 state;
-	int ret, affinity_level = 0;
+	int affinity_level = 0;
 	/*
 	 * There are no known implementations of PSCI actually using the
 	 * power state field, pass a sensible default for now.
