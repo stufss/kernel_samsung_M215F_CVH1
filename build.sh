@@ -30,6 +30,17 @@ exit 1
 fi
 export KSU
 
+if [[ -z "$OLD" || "$OLD" = "0" ]]; then
+echo "NOT PATCHING tzdev!!"
+export OLST=-
+elif [ "$OLD" = "1" ]; then
+echo "PATCHING tzdev!!"
+export OLST=_OLD-
+rm -rf drivers/misc/tzdev/startup.tzar
+cp startup_old.tzar drivers/misc/tzdev/startup.tzar
+git apply tzdev.patch
+fi
+
 if [[ -z "$CB" || "$CB" = "y" ]]; then
 echo "Clean Build"
 rm -rf out
@@ -103,7 +114,7 @@ kmod=$(echo ${kver} | awk -F'.' '{print $3}')
 echo "  Zipping Stuff"
 cd AnyKernel3
 rm -rf N_KERNEL.*.zip
-zip -r1 N_KERNEL.${kmod}_${DEVICE}${KSUSTAT}-${TIME}.zip * -x .git README.md *placeholder
+zip -r1 N_KERNEL.${kmod}_${DEVICE}${KSUSTAT}${OLST}${TIME}.zip * -x .git README.md *placeholder
 cd ..
 
 if [[ -z "$AUTO" || "$AUTO" = "0" ]]; then

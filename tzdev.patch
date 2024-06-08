@@ -1,0 +1,1084 @@
+diff --git a/arch/arm64/configs/m21_defconfig b/arch/arm64/configs/m21_defconfig
+index 2dcde7df613d..e0d88a7a41b0 100644
+--- a/arch/arm64/configs/m21_defconfig
++++ b/arch/arm64/configs/m21_defconfig
+@@ -1497,6 +1497,8 @@ CONFIG_TZDEV_SK_MULTICORE=y
+ CONFIG_ION_FD2PHYS=y
+ CONFIG_TZIRS=y
+ # CONFIG_TZTUI is not set
++CONFIG_TZDEV_PAGE_MIGRATION=y
++# CONFIG_TZ_TRANSPORT is not set
+ # CONFIG_TZDEV_HOTPLUG is not set
+ CONFIG_TZDEV_BOOST=y
+ CONFIG_TZ_BOOT_LOG=y
+diff --git a/arch/arm64/configs/m31_defconfig b/arch/arm64/configs/m31_defconfig
+index 6533f042acc5..9658e112d173 100644
+--- a/arch/arm64/configs/m31_defconfig
++++ b/arch/arm64/configs/m31_defconfig
+@@ -1496,6 +1496,8 @@ CONFIG_TZDEV_SK_MULTICORE=y
+ CONFIG_ION_FD2PHYS=y
+ CONFIG_TZIRS=y
+ # CONFIG_TZTUI is not set
++CONFIG_TZDEV_PAGE_MIGRATION=y
++# CONFIG_TZ_TRANSPORT is not set
+ # CONFIG_TZDEV_HOTPLUG is not set
+ CONFIG_TZDEV_BOOST=y
+ CONFIG_TZ_BOOT_LOG=y
+diff --git a/drivers/misc/tzdev/Kconfig b/drivers/misc/tzdev/Kconfig
+index 5c4ed5c6a42f..463d4969fcd6 100755
+--- a/drivers/misc/tzdev/Kconfig
++++ b/drivers/misc/tzdev/Kconfig
+@@ -129,6 +129,27 @@ config TZTUI
+ 	help
+ 	  Enable Trusted user interface support for Samsung Secure OS.
+ 
++config TZDEV_PAGE_MIGRATION
++	bool "Page migration"
++	depends on MIGRATION && CMA
++	default n
++	help
++	  Enable Page migration functionality for CMA Migration.
++
++config TZ_TRANSPORT
++	bool "Transport module"
++	depends on TZDEV
++	default n
++	help
++	  Enable Transport module. It is used for transfering data from SK to NWd.
++
++config TZ_TRANSPORT_PG_CNT
++	int "TZDEV transport module per-CPU buffer size (in pages)"
++	depends on TZ_TRANSPORT
++	default 1
++	help
++	  Select TZDEV transport buffer size in pages per CPU.
++
+ config TZDEV_HOTPLUG
+ 	bool "Core hotplug"
+ 	depends on HOTPLUG_CPU
+@@ -179,7 +200,7 @@ config TZDEV_DEBUG
+ 
+ config TZ_NWFS
+ 	bool "Normal world file system interface driver"
+-	default n
++	default y
+ 	help
+ 	  Normal world file system interface driver.
+ 
+diff --git a/drivers/misc/tzdev/Makefile b/drivers/misc/tzdev/Makefile
+index d753c77b4f71..0b77fa05c72e 100755
+--- a/drivers/misc/tzdev/Makefile
++++ b/drivers/misc/tzdev/Makefile
+@@ -16,7 +16,6 @@ obj-$(CONFIG_TZDEV)			+= tz_platform.o
+ obj-$(CONFIG_TZDEV)			+= tz_ree_time.o
+ obj-$(CONFIG_TZDEV)			+= tz_uiwsock.o
+ obj-$(CONFIG_TZDEV)			+= tzdev.o
+-obj-$(CONFIG_TZDEV)			+= umem.o
+ 
+ obj-$(CONFIG_TZDEV_KTHREADS_NOTIFIER)	+= tz_kthread_pool_notifier.o
+ obj-$(CONFIG_TZDEV_KTHREADS_SMPBOOT)	+= tz_kthread_pool_smpboot.o
+diff --git a/drivers/misc/tzdev/sysdep.h b/drivers/misc/tzdev/sysdep.h
+index a645ad6113cf..89d25142fc59 100755
+--- a/drivers/misc/tzdev/sysdep.h
++++ b/drivers/misc/tzdev/sysdep.h
+@@ -21,6 +21,7 @@
+ #include <linux/idr.h>
+ #include <linux/kernel.h>
+ #include <linux/kfifo.h>
++#include <linux/migrate.h>
+ #include <linux/of.h>
+ #include <linux/types.h>
+ #include <linux/version.h>
+@@ -81,6 +82,25 @@ static inline gid_t __kgid_val(kgid_t gid)
+ #define __flush_dcache_area(s, e)	__cpuc_flush_dcache_area(s, e)
+ #endif
+ 
++#if defined(CONFIG_TZDEV_PAGE_MIGRATION)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
++#define sysdep_migrate_pages(list, alloc, free)		migrate_pages((list), (alloc), (free), 0, MIGRATE_SYNC, MR_MEMORY_FAILURE)
++#define sysdep_putback_isolated_pages(list)		putback_movable_pages(list)
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
++#define sysdep_migrate_pages(list, alloc, free)		({(void)free; migrate_pages((list), (alloc), 0, MIGRATE_SYNC, MR_MEMORY_FAILURE);})
++#define sysdep_putback_isolated_pages(list)		putback_lru_pages(list)
++#else
++#define sysdep_migrate_pages(list, alloc, free)		({(void)free; migrate_pages((list), (alloc), 0, false, MIGRATE_SYNC);})
++#define sysdep_putback_isolated_pages(list)		putback_lru_pages(list)
++#endif
++#endif
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
++#define sysdep_kfifo_put(fifo, val) kfifo_put(fifo, val)
++#else
++#define sysdep_kfifo_put(fifo, val) kfifo_put(fifo, &val)
++#endif
++
+ #if LINUX_VERSION_CODE <= KERNEL_VERSION(3, 13, 0)
+ #define U8_MAX		((u8)~0U)
+ #define S8_MAX		((s8)(U8_MAX>>1))
+diff --git a/drivers/misc/tzdev/teec/shared_memory.c b/drivers/misc/tzdev/teec/shared_memory.c
+index 837f25d6e8b1..a2480746c0d3 100755
+--- a/drivers/misc/tzdev/teec/shared_memory.c
++++ b/drivers/misc/tzdev/teec/shared_memory.c
+@@ -24,6 +24,8 @@
+ #include "tzlog.h"
+ 
+ #define PTR_ALIGN_PGDN(p)	((typeof(p))(((uintptr_t)(p)) & PAGE_MASK))
++#define OFFSET_IN_PAGE(x)	((x) & (~PAGE_MASK))
++#define NUM_PAGES(size)		(((size) >> PAGE_SHIFT) + !!OFFSET_IN_PAGE(size))
+ 
+ static void tzdev_teec_release_shared_memory(void *data)
+ {
+diff --git a/drivers/misc/tzdev/tz_common.h b/drivers/misc/tzdev/tz_common.h
+index 88f7f78b913b..2bc0069bf99a 100755
+--- a/drivers/misc/tzdev/tz_common.h
++++ b/drivers/misc/tzdev/tz_common.h
+@@ -25,9 +25,12 @@
+ #include <sys/types.h>
+ #endif
+ 
++#define UINT_PTR(a)			((void *)(unsigned long)(a))
++
+ #define TZ_IOC_MAGIC			'c'
+ 
+ #define TZIO_MEM_REGISTER		_IOW(TZ_IOC_MAGIC, 120, struct tzio_mem_register)
++#define TZIO_MEM_RELEASE		_IOW(TZ_IOC_MAGIC, 121, int)
+ #define TZIO_CRYPTO_CLOCK_CONTROL	_IOW(TZ_IOC_MAGIC, 123, int)
+ #define TZIO_GET_SYSCONF		_IOW(TZ_IOC_MAGIC, 124, struct tzio_sysconf)
+ #define TZIO_BOOST_CONTROL		_IOW(TZ_IOC_MAGIC, 125, int)
+@@ -67,6 +70,7 @@ struct tzio_sysconf {
+ } __attribute__((__packed__));
+ 
+ struct tzio_mem_register {
++	const uint64_t ptr;		/* Memory region start (in) */
+ 	uint64_t size;			/* Memory region size (in) */
+ 	uint32_t write;			/* 1 - rw, 0 - ro */
+ } __attribute__((__packed__));
+diff --git a/drivers/misc/tzdev/tz_mem.c b/drivers/misc/tzdev/tz_mem.c
+index d45d16cb8151..2b475b145858 100755
+--- a/drivers/misc/tzdev/tz_mem.c
++++ b/drivers/misc/tzdev/tz_mem.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2012-2020, Samsung Electronics Co., Ltd.
++ * Copyright (C) 2012-2017, Samsung Electronics Co., Ltd.
+  *
+  * This software is licensed under the terms of the GNU General Public
+  * License version 2, as published by the Free Software Foundation, and
+@@ -13,6 +13,7 @@
+ 
+ #include <linux/delay.h>
+ #include <linux/list.h>
++#include <linux/migrate.h>
+ #include <linux/mmzone.h>
+ #include <linux/mutex.h>
+ #include <linux/sched.h>
+@@ -26,6 +27,8 @@
+ #include "tz_mem.h"
+ #include "tz_iwio.h"
+ 
++#define TZDEV_MIGRATION_MAX_RETRIES	40
++
+ #define TZDEV_PFNS_PER_PAGE		(PAGE_SIZE / sizeof(sk_pfn_t))
+ #define TZDEV_IWSHMEM_IDS_PER_PAGE	(PAGE_SIZE / sizeof(uint32_t))
+ 
+@@ -36,11 +39,83 @@ static void *tzdev_mem_release_buf;
+ static DEFINE_IDR(tzdev_mem_map);
+ static DEFINE_MUTEX(tzdev_mem_mutex);
+ 
+-static void tzdev_mem_free(int id, struct tzdev_mem_reg *mem, unsigned int is_user)
++int isolate_lru_page(struct page *page);
++
++static unsigned long __tzdev_get_user_pages(struct task_struct *task,
++		struct mm_struct *mm, unsigned long start, unsigned long nr_pages,
++		int write, int force, struct page **pages,
++		struct vm_area_struct **vmas)
++{
++	struct page **cur_pages = pages;
++	unsigned long nr_pinned = 0;
++	int res;
++
++	while (nr_pinned < nr_pages) {
++		res = sysdep_get_user_pages(task, mm, start, nr_pages - nr_pinned, write,
++				force, cur_pages, vmas);
++		if (res < 0)
++			return nr_pinned;
++
++		start += res * PAGE_SIZE;
++		nr_pinned += res;
++		cur_pages += res;
++	}
++
++	return nr_pinned;
++}
++
++/* This is the same approach to pinning user memory
++ * as used in Infiniband drivers.
++ * Refer to drivers/inifiniband/core/umem.c */
++int tzdev_get_user_pages(struct task_struct *task, struct mm_struct *mm,
++		unsigned long start, unsigned long nr_pages, int write,
++		int force, struct page **pages, struct vm_area_struct **vmas)
++{
++	unsigned long i, locked, nr_pinned;
++
++	locked = nr_pages + mm->pinned_vm;
++
++	nr_pinned = __tzdev_get_user_pages(task, mm, start, nr_pages, write,
++						force, pages, vmas);
++	if (nr_pinned != nr_pages)
++		goto fail;
++
++	mm->pinned_vm = locked;
++
++
++	return 0;
++
++fail:
++	for (i = 0; i < nr_pinned; i++)
++		put_page(pages[i]);
++
++	return -EFAULT;
++}
++
++void tzdev_put_user_pages(struct page **pages, unsigned long nr_pages)
+ {
+ 	unsigned long i;
+ 
+-	if (!mem->is_user) {
++	for (i = 0; i < nr_pages; i++) {
++		/* NULL pointers may appear here due to unsuccessful migration */
++		if (pages[i])
++			put_page(pages[i]);
++	}
++}
++
++void tzdev_decrease_pinned_vm(struct mm_struct *mm, unsigned long nr_pages)
++{
++	down_write(&mm->mmap_sem);
++	mm->pinned_vm -= nr_pages;
++	up_write(&mm->mmap_sem);
++}
++
++static void tzdev_mem_free(int id, struct tzdev_mem_reg *mem, unsigned int is_user)
++{
++	struct task_struct *task;
++	struct mm_struct *mm;
++
++	if (!mem->pid) {
+ 		if (!is_user) {
+ 			if (mem->free_func)
+ 				mem->free_func(mem->free_data);
+@@ -54,9 +129,22 @@ static void tzdev_mem_free(int id, struct tzdev_mem_reg *mem, unsigned int is_us
+ 
+ 	idr_remove(&tzdev_mem_map, id);
+ 
+-	for (i = 0; i < mem->nr_pages; i++)
+-		__free_page(mem->pages[i]);
++	tzdev_put_user_pages(mem->pages, mem->nr_pages);
++
++	task = get_pid_task(mem->pid, PIDTYPE_PID);
++	put_pid(mem->pid);
++	if (!task)
++		goto out;
++
++	mm = get_task_mm(task);
++	put_task_struct(task);
++	if (!mm)
++		goto out;
++
++	tzdev_decrease_pinned_vm(mm, mem->nr_pages);
++	mmput(mm);
+ 
++out:
+ 	kfree(mem->pages);
+ 	kfree(mem);
+ }
+@@ -90,10 +178,7 @@ static int _tzdev_mem_release(int id, unsigned int is_user)
+ 		goto out;
+ 	}
+ 
+-	if (is_user != mem->is_user) {
+-		tzdev_teec_error("Trying to release %s memory but memory belongs %s.\n",
+-				is_user ? "user space":"kernel space",
+-				mem->is_user ? "user space":"kernel space");
++	if (is_user != !!mem->pid) {
+ 		ret = -EPERM;
+ 		goto out;
+ 	}
+@@ -186,6 +271,178 @@ static int _tzdev_mem_register(struct tzdev_mem_reg *mem, sk_pfn_t *pfns,
+ 	return ret;
+ }
+ 
++#if defined(CONFIG_TZDEV_PAGE_MIGRATION)
++
++static struct page *tzdev_alloc_kernel_page(struct page *page, unsigned long private, int **x)
++{
++	return alloc_page(GFP_KERNEL);
++}
++
++static void tzdev_free_kernel_page(struct page *page, unsigned long private)
++{
++	__free_page(page);
++}
++
++static unsigned long tzdev_get_migratetype(struct page *page)
++{
++	struct zone *zone;
++	unsigned long flags;
++	unsigned long migrate_type;
++
++	/* Zone lock must be held to avoid race with
++	 * set_pageblock_migratetype() */
++	zone = page_zone(page);
++	spin_lock_irqsave(&zone->lock, flags);
++	migrate_type = get_pageblock_migratetype(page);
++	spin_unlock_irqrestore(&zone->lock, flags);
++
++	return migrate_type;
++}
++
++static void tzdev_verify_migration_page(struct page *page)
++{
++	unsigned long migrate_type;
++
++	migrate_type = tzdev_get_migratetype(page);
++	if (migrate_type == MIGRATE_CMA || migrate_type == MIGRATE_ISOLATE)
++		tzdev_print(0, "%s: migrate_type == %lu\n", __func__, migrate_type);
++}
++
++static void tzdev_verify_migration(struct page **pages, unsigned long nr_pages)
++{
++	unsigned long i;
++
++	for (i = 0; i < nr_pages; i++)
++		tzdev_verify_migration_page(pages[i]);
++}
++
++static int __tzdev_migrate_pages(struct task_struct *task, struct mm_struct *mm,
++		unsigned long start, unsigned long nr_pages, int write,
++		int force, struct page **pages, unsigned long *verified_bitmap)
++{
++	unsigned long i = 0, migrate_nr = 0, nr_pin = 0;
++	unsigned long cur_pages_index, cur_start, pinned, migrate_type;
++	int res;
++	struct page **cur_pages;
++	LIST_HEAD(pages_list);
++	int ret = 0;
++
++	/* Add migrating pages to the list */
++	while ((i = find_next_zero_bit(verified_bitmap, nr_pages, i)) < nr_pages) {
++		migrate_type = tzdev_get_migratetype(pages[i]);
++		/* Skip pages that is currently isolated by somebody.
++		 * Isolated page may originally have MIGRATE_CMA type,
++		 * so caller should repeat migration for such pages */
++		if (migrate_type == MIGRATE_ISOLATE) {
++			tzdev_print(0, "%s: migrate_type is MIGRATE_ISOLATE\n", __func__);
++			ret = -EAGAIN;
++			i++;
++			continue;
++		}
++
++		/* Mark non-CMA pages as verified and skip them */
++		if (migrate_type != MIGRATE_CMA) {
++			bitmap_set(verified_bitmap, i, 1);
++			i++;
++			continue;
++		}
++
++		/* Call migrate_prep() once if migration necessary */
++		if (migrate_nr == 0)
++			migrate_prep();
++
++		/* Pages should be isolated from an LRU list before migration.
++		 * If isolation failed skip this page and inform caller to
++		 * repeat migrate operation */
++		res = isolate_lru_page(pages[i]);
++		if (res < 0) {
++			tzdev_print(0, "%s: isolate_lru_page() failed, res=%d\n", __func__, res);
++			ret = -EAGAIN;
++			i++;
++			continue;
++		}
++
++		list_add_tail(&pages[i]->lru, &pages_list);
++		put_page(pages[i]);
++		/* pages array will be refilled with migrated pages later */
++		pages[i] = NULL;
++		migrate_nr++;
++		i++;
++	}
++
++	if (!migrate_nr)
++		return ret;
++
++	/* make migration */
++	res = sysdep_migrate_pages(&pages_list, tzdev_alloc_kernel_page, tzdev_free_kernel_page);
++	if (res) {
++		sysdep_putback_isolated_pages(&pages_list);
++		return -EFAULT;
++	}
++
++	/* pin migrated pages */
++	i = 0;
++	do {
++		nr_pin = 0;
++
++		/* find index of the next migrated page */
++		while (i < nr_pages && pages[i])
++			i++;
++
++		cur_pages = &pages[i];
++		cur_pages_index = i;
++		cur_start = start + i * PAGE_SIZE;
++
++		/* find continuous migrated pages range */
++		while (i < nr_pages && !pages[i]) {
++			nr_pin++;
++			i++;
++		}
++
++		/* and pin it */
++		pinned = __tzdev_get_user_pages(task, mm, cur_start, nr_pin,
++						write, force, cur_pages, NULL);
++		if (pinned != nr_pin)
++			return -EFAULT;
++
++		/* Check that migrated pages are not MIGRATE_CMA or MIGRATE_ISOLATE */
++		tzdev_verify_migration(cur_pages, nr_pin);
++		bitmap_set(verified_bitmap, cur_pages_index, nr_pin);
++
++		migrate_nr -= nr_pin;
++	} while (migrate_nr);
++
++	return ret;
++}
++
++int tzdev_migrate_pages(struct task_struct *task, struct mm_struct *mm,
++		unsigned long start, unsigned long nr_pages, int write,
++		int force, struct page **pages)
++{
++	int ret;
++	unsigned int retries = 0;
++	unsigned long *verified_bitmap;
++	size_t bitmap_size = DIV_ROUND_UP(nr_pages, BITS_PER_LONG);
++
++	verified_bitmap = kcalloc(bitmap_size, sizeof(unsigned long), GFP_KERNEL);
++	if (!verified_bitmap)
++		return -ENOMEM;
++
++	do {
++		ret = __tzdev_migrate_pages(task, mm, start, nr_pages, write,
++				force, pages, verified_bitmap);
++
++		if (ret != -EAGAIN || (retries++ >= TZDEV_MIGRATION_MAX_RETRIES))
++			break;
++		msleep(1);
++	} while (1);
++
++	kfree(verified_bitmap);
++
++	return ret;
++}
++#endif /* CONFIG_TZDEV_PAGE_MIGRATION */
++
+ int tzdev_mem_init(void)
+ {
+ 	struct page *page;
+@@ -214,28 +471,40 @@ void tzdev_mem_fini(void)
+ 	__free_page(virt_to_page(tzdev_mem_release_buf));
+ }
+ 
+-int tzdev_mem_register_user(unsigned long size, unsigned int write)
++int tzdev_mem_register_user(void *ptr, unsigned long size, unsigned int write)
+ {
++	struct task_struct *task;
++	struct mm_struct *mm;
+ 	struct page **pages;
+ 	struct tzdev_mem_reg *mem;
+ 	sk_pfn_t *pfns;
++	unsigned long start, end;
+ 	unsigned long nr_pages = 0;
+-	unsigned long i, j;
+-	int ret, id;
++	int ret, res, i, id;
+ 	unsigned int flags = 0;
+ 
+ 	if (!size)
+ 		return -EINVAL;
+ 
+-	nr_pages = NUM_PAGES(size);
++	if (!access_ok(write ? VERIFY_WRITE : VERIFY_READ, ptr, size))
++		return -EFAULT;
++
++	start = (unsigned long)ptr >> PAGE_SHIFT;
++	end = ((unsigned long)ptr + size + PAGE_SIZE - 1) >> PAGE_SHIFT;
++	nr_pages = end - start;
+ 
+ 	if (write)
+ 		flags |= TZDEV_IWSHMEM_REG_FLAG_WRITE;
+ 
++	task = current;
++	mm = get_task_mm(task);
++	if (!mm)
++		return -ESRCH;
++
+ 	pages = kcalloc(nr_pages, sizeof(struct page *), GFP_KERNEL);
+ 	if (!pages) {
+-		tzdev_teec_error("Failed to allocate pages buffer.\n");
+-		return -ENOMEM;
++		ret = -ENOMEM;
++		goto out_mm;
+ 	}
+ 
+ 	pfns = kmalloc(nr_pages * sizeof(sk_pfn_t), GFP_KERNEL);
+@@ -250,43 +519,72 @@ int tzdev_mem_register_user(unsigned long size, unsigned int write)
+ 		goto out_pfns;
+ 	}
+ 
+-	for (i = 0; i < nr_pages; i++) {
+-		pages[i] = alloc_page(GFP_KERNEL | __GFP_ZERO);
+-		if (!pages[i]) {
+-			tzdev_teec_error("Failed to allocate iwshmem page.\n");
+-			ret = -ENOMEM;
+-			goto out_mem;
+-		}
+-
+-		pfns[i] = page_to_pfn(pages[i]);
+-	}
+-
+-	mem->is_user = 1;
++	mem->pid = get_task_pid(task, PIDTYPE_PID);
+ 	mem->nr_pages = nr_pages;
+ 	mem->pages = pages;
+ 	mem->free_func = NULL;
+ 	mem->free_data = NULL;
+ 	mem->in_release = 0;
+ 
++	/*
++	 * Holding 'mm->mmap_sem' is required to synchronize users who tries to register same pages simultaneously.
++	 * Without synchronization both users would hold page refcount and so preventing migration.
++	 */
++	down_write(&mm->mmap_sem);
++	res = tzdev_get_user_pages(task, mm, (unsigned long)ptr,
++			nr_pages, 1, !write, pages, NULL);
++	if (res) {
++		up_write(&mm->mmap_sem);
++		tzdev_print(0, "Failed to pin user pages (%d)\n", res);
++		ret = res;
++		goto out_mem;
++	}
++
++#if defined(CONFIG_TZDEV_PAGE_MIGRATION)
++	/*
++	 * In case of enabled migration it is possible that userspace pages
++	 * will be migrated from current physical page to some other
++	 * To avoid fails of CMA migrations we have to move pages to other
++	 * region which can not be inside any CMA region. This is done by
++	 * allocations with GFP_KERNEL flag to point UNMOVABLE memblock
++	 * to be used for such allocations.
++	 */
++	res = tzdev_migrate_pages(task, mm, (unsigned long)ptr, nr_pages,
++			1, !write, pages);
++	if (res < 0) {
++		up_write(&mm->mmap_sem);
++		tzdev_print(0, "Failed to migrate CMA pages (%d)\n", res);
++		ret = res;
++		goto out_pin;
++	}
++#endif /* CONFIG_TZDEV_PAGE_MIGRATION */
++	up_write(&mm->mmap_sem);
++	for (i = 0; i < nr_pages; i++)
++		pfns[i] = page_to_pfn(pages[i]);
++
+ 	id = _tzdev_mem_register(mem, pfns, nr_pages, flags);
+ 	if (id < 0) {
+ 		ret = id;
+-		goto out_mem;
++		goto out_pin;
+ 	}
+ 
+ 	kfree(pfns);
+ 
++	mmput(mm);
++
+ 	return id;
+ 
++out_pin:
++	tzdev_put_user_pages(pages, nr_pages);
++	tzdev_decrease_pinned_vm(mm, nr_pages);
+ out_mem:
+ 	kfree(mem);
+-
+-	for (j = 0; j < i; j++)
+-		__free_page(pages[j]);
+ out_pfns:
+ 	kfree(pfns);
+ out_pages:
+ 	kfree(pages);
++out_mm:
++	mmput(mm);
+ 
+ 	return ret;
+ }
+@@ -326,7 +624,7 @@ int tzdev_mem_register(void *ptr, unsigned long size, unsigned int write,
+ 		goto out_pfns;
+ 	}
+ 
+-	mem->is_user = 0;
++	mem->pid = NULL;
+ 	mem->free_func = free_func;
+ 	mem->free_data = free_data;
+ 	mem->in_release = 0;
+@@ -378,15 +676,3 @@ void tzdev_mem_release_panic_handler(void)
+ 			tzdev_mem_free(id, mem, 0);
+ 	mutex_unlock(&tzdev_mem_mutex);
+ }
+-
+-int tzdev_mem_find(unsigned int id, struct tzdev_mem_reg **mem)
+-{
+-	mutex_lock(&tzdev_mem_mutex);
+-	*mem = idr_find(&tzdev_mem_map, id);
+-	mutex_unlock(&tzdev_mem_mutex);
+-
+-	if (*mem == NULL)
+-		return -ENOENT;
+-
+-	return 0;
+-}
+diff --git a/drivers/misc/tzdev/tz_mem.h b/drivers/misc/tzdev/tz_mem.h
+index becfbca8732a..5b3fcaa1aed5 100755
+--- a/drivers/misc/tzdev/tz_mem.h
++++ b/drivers/misc/tzdev/tz_mem.h
+@@ -16,17 +16,13 @@
+ 
+ #include <linux/mm.h>
+ #include <linux/pid.h>
+-#include <asm/page.h>
+ 
+ #include <tz_cred.h>
+ 
+-#define OFFSET_IN_PAGE(x)	((x) & (~PAGE_MASK))
+-#define NUM_PAGES(size)		(((size) >> PAGE_SHIFT) + !!OFFSET_IN_PAGE(size))
+-
+ typedef void (*tzdev_mem_free_func_t)(void *);
+ 
+ struct tzdev_mem_reg {
+-	unsigned int is_user;
++	struct pid *pid;
+ 	unsigned long nr_pages;
+ 	struct page **pages;
+ 	tzdev_mem_free_func_t free_func;
+@@ -37,11 +33,21 @@ struct tzdev_mem_reg {
+ 
+ int tzdev_mem_init(void);
+ void tzdev_mem_fini(void);
+-int tzdev_mem_register_user(unsigned long size, unsigned int write);
++
++int tzdev_mem_register_user(void *ptr, unsigned long size, unsigned int write);
+ int tzdev_mem_release_user(unsigned int id);
++
+ int tzdev_mem_register(void *ptr, unsigned long size, unsigned int write,
+ 		tzdev_mem_free_func_t free_func, void *free_data);
+ int tzdev_mem_release(unsigned int id);
+-int tzdev_mem_find(unsigned int id, struct tzdev_mem_reg **mem);
++int tzdev_get_user_pages(struct task_struct *task, struct mm_struct *mm,
++		unsigned long start, unsigned long nr_pages, int write,
++		int force, struct page **pages, struct vm_area_struct **vmas);
++int tzdev_migrate_pages(struct task_struct *task, struct mm_struct *mm,
++		unsigned long start, unsigned long nr_pages, int write,
++		int force, struct page **pages);
++void tzdev_put_user_pages(struct page **pages, unsigned long nr_pages);
++void tzdev_decrease_pinned_vm(struct mm_struct *mm, unsigned long nr_pages);
+ void tzdev_mem_release_panic_handler(void);
++
+ #endif /* __TZ_MEM_H__ */
+diff --git a/drivers/misc/tzdev/tzdev.c b/drivers/misc/tzdev/tzdev.c
+index d57ab3bffba6..4d4a25b13ffb 100755
+--- a/drivers/misc/tzdev/tzdev.c
++++ b/drivers/misc/tzdev/tzdev.c
+@@ -60,7 +60,6 @@
+ #include "tzdev.h"
+ #include "tzlog.h"
+ #include "tzprofiler.h"
+-#include "umem.h"
+ 
+ MODULE_AUTHOR("Jaemin Ryu <jm77.ryu@samsung.com>");
+ MODULE_AUTHOR("Vasily Leonenko <v.leonenko@samsung.com>");
+@@ -96,6 +95,11 @@ enum tzdev_swd_state {
+ 	TZDEV_SWD_DEAD
+ };
+ 
++struct tzdev_shmem {
++	struct list_head link;
++	unsigned int id;
++};
++
+ static atomic_t tzdev_nwd_state = ATOMIC_INIT(TZDEV_NWD_DOWN);
+ static atomic_t tzdev_swd_state = ATOMIC_INIT(TZDEV_SWD_DOWN);
+ 
+@@ -353,12 +357,6 @@ int tzdev_run_init_sequence(void)
+ 			ret = -ESHUTDOWN;
+ 			goto out;
+ 		}
+-
+-		if (tzdev_umem_register()) {
+-			tzdev_print(0, "tzdev_umem_register() failed\n");
+-			ret = -ESHUTDOWN;
+-			goto out;
+-		}
+ 	}
+ out:
+ 	if (ret == -ESHUTDOWN) {
+@@ -380,6 +378,63 @@ static int tzdev_get_sysconf(struct file *filp, unsigned long arg)
+ 	return 0;
+ }
+ 
++static int tzdev_register_shared_memory(struct file *filp, unsigned long arg)
++{
++	int ret;
++	struct tzdev_shmem *shmem;
++	struct tzdev_fd_data *data = filp->private_data;
++	struct tzio_mem_register __user *argp = (struct tzio_mem_register __user *)arg;
++	struct tzio_mem_register s;
++
++	if (copy_from_user(&s, argp, sizeof(struct tzio_mem_register)))
++		return -EFAULT;
++
++	shmem = kzalloc(sizeof(struct tzdev_shmem), GFP_KERNEL);
++	if (!shmem) {
++		tzdev_print(0, "Failed to allocate shmem structure\n");
++		return -ENOMEM;
++	}
++
++	ret = tzdev_mem_register_user(UINT_PTR(s.ptr), s.size, s.write);
++	if (ret < 0) {
++		kfree(shmem);
++		return ret;
++	}
++
++	INIT_LIST_HEAD(&shmem->link);
++	shmem->id = ret;
++
++	spin_lock(&data->shmem_list_lock);
++	list_add(&shmem->link, &data->shmem_list);
++	spin_unlock(&data->shmem_list_lock);
++
++	return shmem->id;
++}
++
++static int tzdev_release_shared_memory(struct file *filp, unsigned int id)
++{
++	struct tzdev_shmem *shmem;
++	struct tzdev_fd_data *data = filp->private_data;
++	unsigned int found = 0;
++
++	spin_lock(&data->shmem_list_lock);
++	list_for_each_entry(shmem, &data->shmem_list, link) {
++		if (shmem->id == id) {
++			list_del(&shmem->link);
++			found = 1;
++			break;
++		}
++	}
++	spin_unlock(&data->shmem_list_lock);
++
++	if (!found)
++		return -EINVAL;
++
++	kfree(shmem);
++
++	return tzdev_mem_release_user(id);
++}
++
+ static int tzdev_boost_control(struct file *filp, unsigned int state)
+ {
+ 	struct tzdev_fd_data *data = filp->private_data;
+@@ -430,6 +485,8 @@ static int tzdev_open(struct inode *inode, struct file *filp)
+ 		return -ENOMEM;
+ 	}
+ 
++	INIT_LIST_HEAD(&data->shmem_list);
++	spin_lock_init(&data->shmem_list_lock);
+ 	mutex_init(&data->mutex);
+ 
+ 	filp->private_data = data;
+@@ -439,8 +496,15 @@ static int tzdev_open(struct inode *inode, struct file *filp)
+ 
+ static int tzdev_release(struct inode *inode, struct file *filp)
+ {
++	struct tzdev_shmem *shmem, *tmp;
+ 	struct tzdev_fd_data *data = filp->private_data;
+ 
++	list_for_each_entry_safe(shmem, tmp, &data->shmem_list, link) {
++		list_del(&shmem->link);
++		tzdev_mem_release_user(shmem->id);
++		kfree(shmem);
++	}
++
+ 	if (data->boost_state)
+ 		tzdev_boost_control(filp, TZIO_BOOST_OFF);
+ 
+@@ -458,6 +522,10 @@ static long tzdev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	switch (cmd) {
+ 	case TZIO_GET_SYSCONF:
+ 		return tzdev_get_sysconf(filp, arg);
++	case TZIO_MEM_REGISTER:
++		return tzdev_register_shared_memory(filp, arg);
++	case TZIO_MEM_RELEASE:
++		return tzdev_release_shared_memory(filp, arg);
+ 	case TZIO_BOOST_CONTROL:
+ 		return tzdev_boost_control(filp, arg);
+ 	default:
+@@ -494,7 +562,6 @@ static int exit_tzdev(struct notifier_block *cb, unsigned long code, void *unuse
+ 
+ 	atomic_set(&tzdev_nwd_state, TZDEV_NWD_DOWN);
+ 
+-	tzdev_umem_unregister();
+ 	tzdev_platform_unregister();
+ 	tz_cdev_unregister(&tzdev_cdev);
+ 	tzdev_cma_mem_release(tzdev_cdev.device);
+diff --git a/drivers/misc/tzdev/tzdev.h b/drivers/misc/tzdev/tzdev.h
+index f5f6008e1dae..95ea5bc12d30 100755
+--- a/drivers/misc/tzdev/tzdev.h
++++ b/drivers/misc/tzdev/tzdev.h
+@@ -66,6 +66,9 @@
+ #define TZDEV_SMC_PROFILER_CONTROL	TZDEV_SMC_COMMAND(17)
+ 
+ struct tzdev_fd_data {
++	struct list_head shmem_list;
++	spinlock_t shmem_list_lock;
++
+ 	unsigned int crypto_clk_state;
+ 	unsigned int boost_state;
+ 	struct mutex mutex;
+diff --git a/drivers/misc/tzdev/umem.c b/drivers/misc/tzdev/umem.c
+deleted file mode 100755
+index f8902b570986..000000000000
+--- a/drivers/misc/tzdev/umem.c
++++ /dev/null
+@@ -1,198 +0,0 @@
+-/*
+- * Copyright (C) 2012-2020, Samsung Electronics Co., Ltd.
+- *
+- * This software is licensed under the terms of the GNU General Public
+- * License version 2, as published by the Free Software Foundation, and
+- * may be copied, distributed, and modified under those terms.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- */
+-
+-#include <linux/atomic.h>
+-#include <linux/file.h>
+-#include <linux/fs.h>
+-#include <linux/kernel.h>
+-#include <linux/mmzone.h>
+-#include <linux/module.h>
+-#include <linux/mutex.h>
+-#include <linux/uaccess.h>
+-#include <linux/vmalloc.h>
+-
+-#include "tz_cdev.h"
+-#include "tz_common.h"
+-#include "tz_mem.h"
+-#include "tzdev.h"
+-#include "tzlog.h"
+-
+-struct tzdev_mem_priv {
+-	struct mutex mutex;
+-	unsigned int id;
+-};
+-
+-static atomic_t tzdev_mem_device_ready = ATOMIC_INIT(0);
+-
+-static int tzdev_mem_op_open(struct inode *inode, struct file *filp)
+-{
+-	struct tzdev_mem_priv *priv;
+-
+-	(void)inode;
+-
+-	priv = kmalloc(sizeof(struct tzdev_mem_priv), GFP_KERNEL);
+-	if (!priv) {
+-		tzdev_teec_error("Failed to allocate iwshmem private data.\n");
+-		return -ENOMEM;
+-	}
+-
+-	mutex_init(&priv->mutex);
+-	priv->id = 0;
+-
+-	filp->private_data = priv;
+-
+-	return 0;
+-}
+-
+-static int tzdev_mem_op_release(struct inode *inode, struct file *filp)
+-{
+-	struct tzdev_mem_priv *priv;
+-
+-	(void)inode;
+-
+-	priv = filp->private_data;
+-	if (priv->id)
+-		tzdev_mem_release_user(priv->id);
+-
+-	mutex_destroy(&priv->mutex);
+-	kfree(priv);
+-
+-	return 0;
+-}
+-
+-static long tzdev_mem_op_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+-{
+-	struct tzdev_mem_priv *priv = filp->private_data;
+-	struct tzio_mem_register __user *argp = (struct tzio_mem_register __user *)arg;
+-	struct tzio_mem_register memreg;
+-	int ret;
+-
+-	if (cmd != TZIO_MEM_REGISTER)
+-		return -ENOTTY;
+-
+-	if (copy_from_user(&memreg, argp, sizeof(struct tzio_mem_register)))
+-		return -EFAULT;
+-
+-	mutex_lock(&priv->mutex);
+-
+-	if (priv->id) {
+-		ret = -EEXIST;
+-		goto out;
+-	}
+-
+-	ret = tzdev_mem_register_user(memreg.size, memreg.write);
+-	if (ret < 0)
+-		goto out;
+-
+-	priv->id = ret;
+-
+-out:
+-	mutex_unlock(&priv->mutex);
+-
+-	return ret;
+-}
+-
+-static int tzdev_mem_op_mmap(struct file *filp, struct vm_area_struct *vma)
+-{
+-	struct tzdev_mem_priv *priv = filp->private_data;
+-	struct tzdev_mem_reg *mem;
+-	unsigned long i;
+-	int ret;
+-
+-	if (vma->vm_pgoff)
+-		return -EINVAL;
+-
+-	mutex_lock(&priv->mutex);
+-
+-	if (!priv->id) {
+-		ret = -ENXIO;
+-		goto out;
+-	}
+-	if (!(vma->vm_flags & VM_WRITE)) {
+-		ret = -EPERM;
+-		goto out;
+-	}
+-	if (vma->vm_flags & VM_EXEC) {
+-		ret = -EPERM;
+-		goto out;
+-	}
+-
+-	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND;
+-	vma->vm_flags &= ~VM_MAYEXEC;
+-
+-	BUG_ON(tzdev_mem_find(priv->id, &mem));
+-
+-	if (vma_pages(vma) != mem->nr_pages) {
+-		ret = -EIO;
+-		goto out;
+-	}
+-
+-	for (i = 0; i < mem->nr_pages; i++) {
+-		ret = vm_insert_page(vma, vma->vm_start + i * PAGE_SIZE, mem->pages[i]);
+-		if (ret)
+-			goto out;
+-	}
+-
+-out:
+-	mutex_unlock(&priv->mutex);
+-
+-	return ret;
+-}
+-
+-static const struct file_operations tzdev_mem_fops = {
+-	.owner = THIS_MODULE,
+-	.open = tzdev_mem_op_open,
+-	.release = tzdev_mem_op_release,
+-	.unlocked_ioctl = tzdev_mem_op_ioctl,
+-#ifdef CONFIG_COMPAT
+-	.compat_ioctl = tzdev_mem_op_ioctl,
+-#endif /* CONFIG_COMPAT */
+-	.mmap = tzdev_mem_op_mmap,
+-};
+-
+-static struct tz_cdev tzdev_mem_cdev = {
+-	.name = "tziwshmem",
+-	.fops = &tzdev_mem_fops,
+-	.owner = THIS_MODULE,
+-};
+-
+-int tzdev_umem_register(void)
+-{
+-	int ret;
+-
+-	ret = tz_cdev_register(&tzdev_mem_cdev);
+-	if (ret) {
+-		tzdev_teec_error("Failed to create iwshmem device, error=%d\n", ret);
+-		return ret;
+-	}
+-
+-	atomic_set(&tzdev_mem_device_ready, 1);
+-
+-	tzdev_teec_info("Iwshmem user interface initialization done.\n");
+-
+-	return 0;
+-}
+-
+-int tzdev_umem_unregister(void)
+-{
+-	if (!atomic_cmpxchg(&tzdev_mem_device_ready, 1, 0)) {
+-		tzdev_teec_info("Iwshmem user interface was not initialized.\n");
+-		return -EPERM;
+-	}
+-
+-	tz_cdev_unregister(&tzdev_mem_cdev);
+-
+-	tzdev_teec_info("Iwshmem user interface finalization done.\n");
+-
+-	return 0;
+-}
+diff --git a/drivers/misc/tzdev/umem.h b/drivers/misc/tzdev/umem.h
+deleted file mode 100755
+index 6a7f453051cd..000000000000
+--- a/drivers/misc/tzdev/umem.h
++++ /dev/null
+@@ -1,22 +0,0 @@
+-/*
+- * Copyright (C) 2012-2020, Samsung Electronics Co., Ltd.
+- *
+- * This software is licensed under the terms of the GNU General Public
+- * License version 2, as published by the Free Software Foundation, and
+- * may be copied, distributed, and modified under those terms.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- */
+-
+-#ifndef __TZ_UMEM_H__
+-#define __TZ_UMEM_H__
+-
+-#include <linux/kconfig.h>
+-
+-int tzdev_umem_register(void);
+-int tzdev_umem_unregister(void);
+-
+-#endif /* __TZ_UMEM_H__ */
