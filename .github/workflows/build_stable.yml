@@ -9,10 +9,10 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        include:
-          - device: m21
-          - device: m31
-    name: "🚧 Build for ${{matrix.device}}"
+        device: [m21, m31]
+        old: [0, 1]
+        ksu: [1]
+    name: "🚧 Build for ${{matrix.device}} KSU=${{matrix.ksu}} OLD=${{matrix.old}}"
 
     steps:
       - name: Checkout source
@@ -39,7 +39,7 @@ jobs:
       - name: Run build
         run: |
 
-          DEVICE=${{matrix.device}} KSU=1 ./build.sh
+          DEVICE=${{matrix.device}} KSU=${{matrix.ksu}} OLD=${{matrix.old}} ./build.sh
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
@@ -47,7 +47,6 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           document: AnyKernel3/N*.zip
-          message: "Build COmpleted"
 
       - name: Upload kernel
         uses: actions/upload-artifact@v4
