@@ -35,7 +35,7 @@ LLVM_NM='${LLVM_DIR}/llvm-nm'
 
 make distclean
 clear
-make ${ARGS} ${DEVICE}_defconfig naz.config
+make ${ARGS} ${DEVICE}_defconfig
 make ${ARGS} -j$(nproc)
 
 echo "  Cleaning Stuff"
