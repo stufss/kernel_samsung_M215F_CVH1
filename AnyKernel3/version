@@ -1,0 +1,23 @@
+ _  _          ___ _                
+| \| |__ _ ___/ __| |__ _ _ _  __ _ 
+| .` / _` |_ / (__| / _` | ' \/ _` |
+|_|\_\__,_/__|\___|_\__,_|_||_\__, |
+                              |___/                
+                
+DEVICE   : SM-M215F
+Support  : Oneui | GSI
+
+Selinux  : Enforcing
+Version  : v0.5
+Baseband : M215FDDU3CVH1
+
+Compiled With Clang 18
+Based on Naz v1
+
+NOTE 1: You need to update libGLES in vendor
+        (if you already did this ignore)
+
+NOTE 2: Make Sure to Format Data if the phone 
+        bootloops and if it still bootloops 
+        after formatting then flash dm_vertity 
+        or multidisabler
