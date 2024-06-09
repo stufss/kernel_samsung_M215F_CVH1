@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Function to print usage
+usage() {
+    echo "Usage: $0 <repository> <version> <file>"
+    echo "Example: $0 owner/repo v1.0.0 file.zip"
+    exit 1
+}
+
+# Check if the correct number of arguments is provided
+if [ $# -ne 3 ]; then
+    usage
+fi
+
+# Assign arguments to variables
+REPOSITORY=$1
+VERSION=$2
+FILE=$3
+
+# GitHub API URL to get the release information
+API_URL="https://api.github.com/repos/$REPOSITORY/releases/tags/$VERSION"
+
+# Get the release information
+RELEASE_INFO=$(curl -s $API_URL)
+
+# Extract the download URL of the specified file
+DOWNLOAD_URL=$(echo "$RELEASE_INFO" | grep -oP '"browser_download_url": "\K(.*)(?=")' | grep "$FILE")
+
+# Check if the download URL was found
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "Error: File '$FILE' not found in release '$VERSION' of repository '$REPOSITORY'"
+    exit 1
+fi
+
+# Download the file
+curl -L -o $FILE $DOWNLOAD_URL
+
+echo "Downloaded $FILE from release $VERSION of repository $REPOSITORY"
