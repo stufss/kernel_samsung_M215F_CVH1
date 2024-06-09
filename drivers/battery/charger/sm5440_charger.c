@@ -383,7 +383,7 @@ static int sm5440_setup_adc(struct sm5440_charger *sm5440, u8 mode)
 			sm5440_enable_adc(sm5440, 0);
 			msleep(10);
 			sm5440_set_adc_rate(sm5440, SM5440_ADC_MODE_ONESHOT);
-			schedule_delayed_work(&sm5440->adc_work, msecs_to_jiffies(200));
+			queue_delayed_work(system_power_efficient_wq, &sm5440->adc_work, msecs_to_jiffies(200));
 			sm5440_enable_adc(sm5440, 1);
 			break;
 		case SM5440_ADC_MODE_CONTINUOUS:
@@ -1916,7 +1916,7 @@ static void sm5440_adc_work(struct work_struct *work)
 			adc_work.work);
 	sm5440_enable_adc(sm5440, 1);
 
-	schedule_delayed_work(&sm5440->adc_work, msecs_to_jiffies(200));
+	queue_delayed_work(system_power_efficient_wq, &sm5440->adc_work, msecs_to_jiffies(200));
 }
 
 static int sm5440_irq_wdtmroff(struct sm5440_charger *sm5440)
