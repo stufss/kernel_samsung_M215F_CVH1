@@ -41,7 +41,6 @@ make ${ARGS} -j$(nproc)
 echo "  Cleaning Stuff"
 rm -rf AnyKernel3/Image
 rm -rf AnyKernel3/config
-rm -rf AnyKernel3/dtb
 echo "  done"
 echo ""
 echo "  Copying Stuff"
@@ -69,7 +68,6 @@ fi
 
 cp -r arch/arm64/boot/Image AnyKernel3/Image
 cp -r .config AnyKernel3/config
-cp -r arch/arm64/boot/dtb_exynos.img AnyKernel3/dtb
 echo "  done"
 echo ""
 kver=$(make kernelversion)
