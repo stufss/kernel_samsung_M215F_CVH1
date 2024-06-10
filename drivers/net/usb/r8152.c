@@ -1349,7 +1349,9 @@ static void intr_callback(struct urb *urb)
 			   "Stop submitting intr, status %d\n", status);
 		return;
 	case -EOVERFLOW:
-		netif_info(tp, intr, tp->netdev, "intr status -EOVERFLOW\n");
+		if (net_ratelimit())
+			netif_info(tp, intr, tp->netdev,
+				   "intr status -EOVERFLOW\n");
 		goto resubmit;
 	/* -EPIPE:  should clear the halt */
 	default:
@@ -2951,9 +2953,26 @@ static void rtl_runtime_suspend_enable(struct r8152 *tp, bool enable)
 
 static void rtl8153_runtime_enable(struct r8152 *tp, bool enable)
 {
-	rtl_runtime_suspend_enable(tp, enable);
-	tp->rtl_ops.u1u2_enable(tp, !enable);
-	tp->rtl_ops.u2p3_enable(tp, !enable);
+	if (enable) {
+		r8153_u1u2en(tp, false);
+		r8153_u2p3en(tp, false);
+		rtl_runtime_suspend_enable(tp, true);
+	} else {
+		rtl_runtime_suspend_enable(tp, false);
+
+		switch (tp->version) {
+		case RTL_VER_03:
+		case RTL_VER_04:
+			break;
+		case RTL_VER_05:
+		case RTL_VER_06:
+		default:
+			r8153_u2p3en(tp, true);
+			break;
+		}
+
+		r8153_u1u2en(tp, true);
+	}
 }
 
 static void rtl8153b_runtime_enable(struct r8152 *tp, bool enable)
@@ -5742,12 +5761,13 @@ static int rtl8152_close(struct net_device *netdev)
 		res = rtl_s5_wol(tp);
 #endif
 		mutex_unlock(&tp->control);
-
-		usb_autopm_put_interface(tp->intf);
 	}
 	timeleft = wait_event_interruptible_timeout(tp->bottom_half_wait_q,
 					tp->bottom_half_event, (tp->bottom_half_wait_time)*HZ);
 	pr_info("%s : wait for end of rx_bottom , timeleft = %d\n", __func__, timeleft);
+
+	if (!res)
+		usb_autopm_put_interface(tp->intf);
 
 	free_all_mem(tp);
 
@@ -5840,7 +5860,10 @@ static void r8153_init(struct r8152 *tp)
 		if (ocp_read_word(tp, MCU_TYPE_PLA, PLA_BOOT_CTRL) &
 		    AUTOLOAD_DONE)
 			break;
+
 		msleep(20);
+		if (test_bit(RTL8152_UNPLUG, &tp->flags))
+			break;
 	}
 
 	for (i = 0; i < 500; i++) {
@@ -5925,8 +5948,15 @@ static void r8153_init(struct r8152 *tp)
 
 	ocp_write_word(tp, MCU_TYPE_USB, USB_CONNECT_TIMER, 0x0001);
 
+	/* MAC clock speed down */
+	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL, 0);
+	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL2, 0);
+	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL3, 0);
+	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL4, 0);
+
 	r8153_power_cut_en(tp, false);
 	r8153_u1u2en(tp, true);
+	usb_enable_lpm(tp->udev);
 
 	/* MAC clock speed down */
 	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL, 0);
@@ -5968,7 +5998,10 @@ static void r8153b_init(struct r8152 *tp)
 		if (ocp_read_word(tp, MCU_TYPE_PLA, PLA_BOOT_CTRL) &
 		    AUTOLOAD_DONE)
 			break;
+
 		msleep(20);
+		if (test_bit(RTL8152_UNPLUG, &tp->flags))
+			break;
 	}
 
 	for (i = 0; i < 500; i++) {
@@ -6223,10 +6256,9 @@ static int rtl8152_reset_resume(struct usb_interface *intf)
 	struct r8152 *tp = usb_get_intfdata(intf);
 
 	clear_bit(SELECTIVE_SUSPEND, &tp->flags);
-	mutex_lock(&tp->control);
 	tp->rtl_ops.init(tp);
 	queue_delayed_work(system_long_wq, &tp->hw_phy_work, 0);
-	mutex_unlock(&tp->control);
+	set_ethernet_addr(tp);
 	return rtl8152_resume(intf);
 }
 
@@ -6525,7 +6557,7 @@ static void rtl8152_get_strings(struct net_device *dev, u32 stringset, u8 *data)
 {
 	switch (stringset) {
 	case ETH_SS_STATS:
-		memcpy(data, *rtl8152_gstrings, sizeof(rtl8152_gstrings));
+		memcpy(data, rtl8152_gstrings, sizeof(rtl8152_gstrings));
 		break;
 	}
 }
@@ -7263,6 +7295,9 @@ static int rtl8152_probe(struct usb_interface *intf,
 		return -ENODEV;
 	}
 
+	if (intf->cur_altsetting->desc.bNumEndpoints < 3)
+		return -ENODEV;
+
 	usb_reset_device(udev);
 	netdev = alloc_etherdev(sizeof(struct r8152));
 	if (!netdev) {
@@ -7342,6 +7377,11 @@ static int rtl8152_probe(struct usb_interface *intf,
 
 	intf->needs_remote_wakeup = 1;
 
+	if (!rtl_can_wakeup(tp))
+		__rtl_set_wol(tp, 0);
+	else
+		tp->saved_wolopts = __rtl_get_wol(tp);
+
 	tp->rtl_ops.init(tp);
 	queue_delayed_work(system_long_wq, &tp->hw_phy_work, 0);
 	set_ethernet_addr(tp);
@@ -7355,10 +7395,6 @@ static int rtl8152_probe(struct usb_interface *intf,
 		goto out1;
 	}
 
-	if (!rtl_can_wakeup(tp))
-		__rtl_set_wol(tp, 0);
-
-	tp->saved_wolopts = __rtl_get_wol(tp);
 	if (tp->saved_wolopts)
 		device_set_wakeup_enable(&udev->dev, true);
 	else
@@ -7413,51 +7449,26 @@ static void rtl8152_disconnect(struct usb_interface *intf)
 				      USB_CDC_PROTO_NONE) \
 
 /* table of devices that work with this driver */
-static struct usb_device_id rtl8152_table[] = {
-	/* Realtek */
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_REALTEK, 0x8050)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_REALTEK, 0x8050)},
-
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_REALTEK, 0x8152)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_REALTEK, 0x8152)},
-
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_REALTEK, 0x8153)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_REALTEK, 0x8153)},
-	/* Samsung */
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_SAMSUNG, 0xa101)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_SAMSUNG, 0xa101)},
-
-	/* Lenovo */
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x304f)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x304f)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x3052)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x3052)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x3054)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x3054)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x3057)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x3057)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x3062)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x3062)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x3069)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x3069)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x7205)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x7205)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x720a)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x720a)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x720b)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x720b)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x720c)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x720c)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x7214)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x7214)},
-
-	/* TP-LINK */
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_TPLINK, 0x0601)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_TPLINK, 0x0601)},
-
-	/* Nvidia */
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_NVIDIA,  0x09ff)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_NVIDIA,  0x09ff)},
+static const struct usb_device_id rtl8152_table[] = {
+	{REALTEK_USB_DEVICE(VENDOR_ID_REALTEK, 0x8050)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_REALTEK, 0x8152)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_REALTEK, 0x8153)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_MICROSOFT, 0x07ab)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_MICROSOFT, 0x07c6)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_MICROSOFT, 0x0927)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_SAMSUNG, 0xa101)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x304f)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x3054)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x3062)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x3069)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x7205)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x720c)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x7214)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x721e)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0xa387)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LINKSYS, 0x0041)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_NVIDIA,  0x09ff)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_TPLINK,  0x0601)},
 	{}
 };
 

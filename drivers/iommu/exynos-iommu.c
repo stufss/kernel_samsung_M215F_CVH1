@@ -584,6 +584,10 @@ static int __init exynos_sysmmu_probe(struct platform_device *pdev)
 			MMU_REV_VER(data->version));
 
 	return 0;
+
+err_iommu_register:
+	iommu_device_sysfs_remove(&data->iommu);
+	return ret;
 }
 
 static bool __sysmmu_disable(struct sysmmu_drvdata *drvdata)
@@ -1224,12 +1228,15 @@ static int exynos_iommu_of_xlate(struct device *master,
 	data = platform_get_drvdata(sysmmu_pdev);
 	if (!data)
 		return -ENODEV;
+	}
 
 	sysmmu = data->sysmmu;
 	if (!owner) {
 		owner = kzalloc(sizeof(*owner), GFP_KERNEL);
-		if (!owner)
+		if (!owner) {
+			put_device(&sysmmu->dev);
 			return -ENOMEM;
+		}
 
 		INIT_LIST_HEAD(&owner->sysmmu_list);
 		INIT_LIST_HEAD(&owner->client);
