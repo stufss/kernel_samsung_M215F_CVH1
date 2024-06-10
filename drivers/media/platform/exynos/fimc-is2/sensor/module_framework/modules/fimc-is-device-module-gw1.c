@@ -233,7 +233,6 @@ static int sensor_gw1_power_setpin(struct device *dev,
 
 static int __init sensor_module_gw1_probe(struct platform_device *pdev)
 {
-	int ch, t;
 	int ret = 0;
 #ifdef USE_AP_PDAF
 	int ch, t;
