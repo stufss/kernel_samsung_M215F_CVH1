@@ -48,10 +48,9 @@ LLVM_DIS='${LLVM_DIR}/llvm-dis'
 LLVM_NM='${LLVM_DIR}/llvm-nm'
 '
 
-make distclean
-clear
-make ${ARGS} ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
-make ${ARGS} -j$(nproc)
+rm -rf out
+make O=out ${ARGS} ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
+make O=out ${ARGS} -j$(nproc)
 
 echo "  Cleaning Stuff"
 rm -rf AnyKernel3/Image
@@ -81,8 +80,8 @@ if ! $found; then
   exit 1
 fi
 
-cp -r arch/arm64/boot/Image AnyKernel3/Image
-cp -r .config AnyKernel3/config
+cp -r out/arch/arm64/boot/Image AnyKernel3/Image
+cp -r out/.config AnyKernel3/config
 echo "  done"
 echo ""
 kver=$(make kernelversion)
