@@ -1,0 +1,49 @@
+name: build_stable (KSU)
+
+on:
+
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        device: [m21, m31]
+        ksu: [1]
+        old: [0, 1]
+    name: "🚧 Build for ${{matrix.device}} KSU=${{matrix.ksu}} OLD=${{matrix.old}}"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Kolkata"
+
+      - name: Setup Toolchains
+        run: |
+          sudo apt update
+          sudo apt install bison flex libssl-dev libarchive-tools -y
+          mkdir -p toolchain
+          cd toolchain
+          echo 'Download antman and sync'
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=05012024
+          echo 'Patch for glibc'
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
+          echo 'Done'
+
+      - name: Run build
+        run: |
+          DEVICE=${{matrix.device}} KSU=${{matrix.ksu}} OLD=${{matrix.old}} ./build.sh
+
+      - name: Upload to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          document: AnyKernel3/N*.zip
+          message: "Build COmpleted"
