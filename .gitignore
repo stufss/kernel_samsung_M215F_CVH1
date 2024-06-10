@@ -125,3 +125,13 @@ all.config
 
 # fetched Android config fragments
 kernel/configs/android-*.cfg
+
+# kernel stuff
+!.github
+out/
+toolchain
+toolchain/
+AnyKernel3/Image
+AnyKernel3/N*.zip
+AnyKernel3/config
+AnyKernel3/dtb
