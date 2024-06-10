@@ -10,8 +10,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        include:
-          - device: m21
+        device: [m21]
     name: "🚧 Build for ${{matrix.device}}"
 
     steps:
@@ -20,13 +19,21 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: szenius/set-timezone@v1.0
+      - uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Kolkata"
 
       - name: Setup Toolchains
         run: |
-          git clone --depth=1 https://github.com/ghazzor/proton-12 toolchain
+          sudo apt update
+          sudo apt install bison flex libssl-dev libarchive-tools -y
+          mkdir -p toolchain
+          cd toolchain
+          echo 'Download antman and sync'
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          echo 'Patch for glibc'
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
+          echo 'Done'
 
       - name: Run build
         run: |
