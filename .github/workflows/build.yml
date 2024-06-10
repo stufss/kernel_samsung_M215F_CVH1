@@ -1,0 +1,47 @@
+name: build
+
+on:
+
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - device: m21
+    name: "🚧 Build for ${{matrix.device}}"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: szenius/set-timezone@v1.0
+        with:
+          timezoneLinux: "Asia/Kolkata"
+
+      - name: Setup Toolchains
+        run: |
+          git clone --depth=1 https://github.com/ghazzor/proton-12 toolchain
+
+      - name: Run build
+        run: |
+          DEVICE=${{matrix.device}} ./build.sh
+
+      - name: Upload to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          document: AnyKernel3/N*.zip
+          message: "Build COmpleted"
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: N_kernel-${{matrix.device}}_Clang_18
+          path: AnyKernel3/N*.zip
