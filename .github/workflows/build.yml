@@ -11,7 +11,8 @@ jobs:
       fail-fast: true
       matrix:
         device: [m21]
-    name: "🚧 Build for ${{matrix.device}}"
+        ksu: [1]
+    name: "🚧 Build for ${{matrix.device}} KSU={{matrix.ksu}}"
 
     steps:
       - name: Checkout source
@@ -37,7 +38,7 @@ jobs:
 
       - name: Run build
         run: |
-          DEVICE=${{matrix.device}} ./build.sh
+          DEVICE=${{matrix.device}} KSU={{matrix.ksu}} ./build.sh
 
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
