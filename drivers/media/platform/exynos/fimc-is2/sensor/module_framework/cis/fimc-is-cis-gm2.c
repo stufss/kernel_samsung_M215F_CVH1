@@ -289,14 +289,14 @@ p_err:
 
 int sensor_gm2_cis_GGC_write(struct v4l2_subdev *subdev)
 {
-	int ret = 0, i;
+	int ret = 0;
 	struct fimc_is_cis *cis;
 	struct i2c_client *client = NULL;
 
 	ulong cal_addr;
 	u8 cal_data[SENSOR_GM2_GGC_CAL_SIZE] = {0, };
 	char *rom_cal_buf = NULL;
-	
+
 	u16 start_addr, data_size;
 
 	FIMC_BUG(!subdev);
