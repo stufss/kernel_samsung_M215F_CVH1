@@ -7,6 +7,7 @@ export KBUILD_BUILD_USER=ghazzor
 
 PATH=$PWD/toolchain/bin:$PATH
 export LLVM_DIR=$PWD/toolchain/bin
+export LLVM=1
 
 export ARCH=arm64
 export PLATFORM_VERSION=12
@@ -58,6 +59,7 @@ STRIP='${LLVM_DIR}/llvm-strip'
 LLVM_AR='${LLVM_DIR}/llvm-ar'
 LLVM_DIS='${LLVM_DIR}/llvm-dis'
 LLVM_NM='${LLVM_DIR}/llvm-nm'
+LLVM=1
 '
 
 make ${ARGS} O=out ${DEVICE}_defconfig naz.config ${CONFIG_KSU}
