@@ -536,7 +536,13 @@ endif
 ifneq ($(GCC_TOOLCHAIN),)
 CLANG_FLAGS	+= --gcc-toolchain=$(GCC_TOOLCHAIN)
 endif
+
+ifeq ($(LLVM_IAS),0)
 CLANG_FLAGS	+= -no-integrated-as
+else
+CLANG_FLAGS	+= -integrated-as
+LLVM_IAS 	:= 1
+endif
 KBUILD_CFLAGS	+= $(CLANG_FLAGS)
 KBUILD_AFLAGS	+= $(CLANG_FLAGS)
 export CLANG_FLAGS
