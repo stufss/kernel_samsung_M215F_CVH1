@@ -1222,6 +1222,7 @@ out:
 	rcu_expedited = rcu_expedited_back;
 #endif
 
+	cpu_up_down_serialize_trainwrecks(tasks_frozen);
 	return ret;
 }
 
@@ -1367,6 +1368,7 @@ out:
 #ifndef CONFIG_TINY_RCU
 	rcu_expedited = rcu_expedited_back;
 #endif
+	cpu_up_down_serialize_trainwrecks(tasks_frozen);
 	return ret;
 }
 
