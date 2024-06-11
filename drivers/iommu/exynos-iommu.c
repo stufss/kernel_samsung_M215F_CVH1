@@ -577,7 +577,7 @@ static int __init exynos_sysmmu_probe(struct platform_device *pdev)
 	ret = iommu_device_register(&data->iommu);
 	if (ret) {
 		dev_err(dev, "Failed to register device\n");
-		return ret;
+		goto err_iommu_register;
 	}
 
 	pm_runtime_enable(dev);
