@@ -137,10 +137,8 @@ struct drbg_state {
 
 	enum drbg_seed_state seeded;		/* DRBG fully seeded? */
 	bool pr;		/* Prediction resistance enabled? */
-#ifdef CONFIG_CRYPTO_FIPS /* FIPS_140_2 */
-	bool hw_entropy;
-#endif
-	struct work_struct seed_work;	/* asynchronous seeding support */
+	bool fips_primed;	/* Continuous test primed? */
+	unsigned char *prev;	/* FIPS 140-2 continuous test value */
 	struct crypto_rng *jent;
 	const struct drbg_state_ops *d_ops;
 	const struct drbg_core *core;
