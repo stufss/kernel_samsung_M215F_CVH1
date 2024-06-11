@@ -43,7 +43,7 @@ static ssize_t write_pmsg(struct file *file, const char __user *buf,
 	if (!access_ok(VERIFY_READ, buf, count))
 		return -EFAULT;
 
-	mutex_lock(&pmsg_lock);
+	rt_mutex_lock(&pmsg_lock);
 #ifdef CONFIG_SEC_EXT
 	if (count > 256)
 		sec_count = 256;
