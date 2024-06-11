@@ -28,12 +28,6 @@
 #include <linux/refcount.h>
 #include <linux/freezer.h>
 
-#ifdef CONFIG_FUSE_SUPPORT_STLOG
-#include <linux/fslog.h>
-#else
-#define ST_LOG(fmt, ...)
-#endif
-
 /** Max number of pages that can be used in a single read request */
 #define FUSE_MAX_PAGES_PER_REQ 32
 
@@ -124,8 +118,8 @@ enum {
 	FUSE_I_INIT_RDPLUS,
 	/** An operation changing file size is in progress  */
 	FUSE_I_SIZE_UNSTABLE,
-	/** Can be filled in by open, to use direct I/O on this file. */
-	FUSE_I_ATTR_FORCE_SYNC,
+	/* Bad inode */
+	FUSE_I_BAD,
 };
 
 struct fuse_conn;
@@ -993,35 +987,20 @@ struct posix_acl;
 struct posix_acl *fuse_get_acl(struct inode *inode, int type);
 int fuse_set_acl(struct inode *inode, struct posix_acl *acl, int type);
 
-#ifdef CONFIG_FREEZER
-static inline void fuse_freezer_do_not_count(void)
-{
-	current->flags |= PF_FREEZER_SKIP;
-}
-
-static inline void fuse_freezer_count(void)
-{
-	current->flags &= ~PF_FREEZER_SKIP;
-}
-#else /* !CONFIG_FREEZER */
-static inline void fuse_freezer_do_not_count(void) {}
-static inline void fuse_freezer_count(void) {}
-#endif
-
 #define fuse_wait_event(wq, condition)						\
 ({										\
-	fuse_freezer_do_not_count();						\
+	freezer_do_not_count();							\
 	wait_event(wq, condition);						\
-	fuse_freezer_count();							\
+	freezer_count();							\
 })
 
 #define fuse_wait_event_killable(wq, condition)					\
 ({										\
 	int __ret = 0;								\
 										\
-	fuse_freezer_do_not_count();						\
+	freezer_do_not_count();							\
 	__ret = wait_event_killable(wq, condition);				\
-	fuse_freezer_count();							\
+	freezer_count();							\
 										\
 	__ret;									\
 })
@@ -1030,9 +1009,9 @@ static inline void fuse_freezer_count(void) {}
 ({										\
 	int __ret = 0;								\
 										\
-	fuse_freezer_do_not_count();						\
+	freezer_do_not_count();							\
 	__ret = wait_event_killable_exclusive(wq, condition);			\
-	fuse_freezer_count();							\
+	freezer_count();							\
 										\
 	__ret;									\
 })
