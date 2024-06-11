@@ -265,10 +265,6 @@
 #include <linux/syscalls.h>
 #include <linux/completion.h>
 #include <linux/uuid.h>
-#include <linux/freezer.h>
-#include <crypto/chacha.h>
-
-#include <asm/processor.h>
 #include <linux/uaccess.h>
 #include <asm/irq.h>
 #include <asm/irq_regs.h>
@@ -1740,9 +1736,9 @@ void get_random_bytes_arch(void *buf, int nbytes)
 		if (!arch_get_random_long(&v))
 			break;
 
-		memcpy(p, &v, chunk);
-		p += chunk;
-		nbytes -= chunk;
+		memcpy(p, &v, block_len);
+		p += block_len;
+		left -= block_len;
 	}
 
 	if (nbytes)
@@ -2180,162 +2176,4 @@ struct ctl_table random_table[] = {
 #endif
 	{ }
 };
-#endif 	/* CONFIG_SYSCTL */
-
-struct batched_entropy {
-	union {
-		u64 entropy_u64[CHACHA_BLOCK_SIZE / sizeof(u64)];
-		u32 entropy_u32[CHACHA_BLOCK_SIZE / sizeof(u32)];
-	};
-	unsigned int position;
-};
-static rwlock_t batched_entropy_reset_lock = __RW_LOCK_UNLOCKED(batched_entropy_reset_lock);
-
-/*
- * Get a random word for internal kernel use only. The quality of the random
- * number is either as good as RDRAND or as good as /dev/urandom, with the
- * goal of being quite fast and not depleting entropy. In order to ensure
- * that the randomness provided by this function is okay, the function
- * wait_for_random_bytes() should be called and return 0 at least once
- * at any point prior.
- */
-static DEFINE_PER_CPU(struct batched_entropy, batched_entropy_u64);
-u64 get_random_u64(void)
-{
-	u64 ret;
-	bool use_lock;
-	unsigned long flags = 0;
-	struct batched_entropy *batch;
-	static void *previous;
-
-#if BITS_PER_LONG == 64
-	if (arch_get_random_long((unsigned long *)&ret))
-		return ret;
-#else
-	if (arch_get_random_long((unsigned long *)&ret) &&
-	    arch_get_random_long((unsigned long *)&ret + 1))
-	    return ret;
-#endif
-
-	warn_unseeded_randomness(&previous);
-
-	use_lock = READ_ONCE(crng_init) < 2;
-	batch = &get_cpu_var(batched_entropy_u64);
-	if (use_lock)
-		read_lock_irqsave(&batched_entropy_reset_lock, flags);
-	if (batch->position % ARRAY_SIZE(batch->entropy_u64) == 0) {
-		extract_crng((u8 *)batch->entropy_u64);
-		batch->position = 0;
-	}
-	ret = batch->entropy_u64[batch->position++];
-	if (use_lock)
-		read_unlock_irqrestore(&batched_entropy_reset_lock, flags);
-	put_cpu_var(batched_entropy_u64);
-	return ret;
-}
-EXPORT_SYMBOL(get_random_u64);
-
-static DEFINE_PER_CPU(struct batched_entropy, batched_entropy_u32);
-u32 get_random_u32(void)
-{
-	u32 ret;
-	bool use_lock;
-	unsigned long flags = 0;
-	struct batched_entropy *batch;
-	static void *previous;
-
-	if (arch_get_random_int(&ret))
-		return ret;
-
-	warn_unseeded_randomness(&previous);
-
-	use_lock = READ_ONCE(crng_init) < 2;
-	batch = &get_cpu_var(batched_entropy_u32);
-	if (use_lock)
-		read_lock_irqsave(&batched_entropy_reset_lock, flags);
-	if (batch->position % ARRAY_SIZE(batch->entropy_u32) == 0) {
-		extract_crng((u8 *)batch->entropy_u32);
-		batch->position = 0;
-	}
-	ret = batch->entropy_u32[batch->position++];
-	if (use_lock)
-		read_unlock_irqrestore(&batched_entropy_reset_lock, flags);
-	put_cpu_var(batched_entropy_u32);
-	return ret;
-}
-EXPORT_SYMBOL(get_random_u32);
-
-/* It's important to invalidate all potential batched entropy that might
- * be stored before the crng is initialized, which we can do lazily by
- * simply resetting the counter to zero so that it's re-extracted on the
- * next usage. */
-static void invalidate_batched_entropy(void)
-{
-	int cpu;
-	unsigned long flags;
-
-	write_lock_irqsave(&batched_entropy_reset_lock, flags);
-	for_each_possible_cpu (cpu) {
-		per_cpu_ptr(&batched_entropy_u32, cpu)->position = 0;
-		per_cpu_ptr(&batched_entropy_u64, cpu)->position = 0;
-	}
-	write_unlock_irqrestore(&batched_entropy_reset_lock, flags);
-}
-
-/**
- * randomize_page - Generate a random, page aligned address
- * @start:	The smallest acceptable address the caller will take.
- * @range:	The size of the area, starting at @start, within which the
- *		random address must fall.
- *
- * If @start + @range would overflow, @range is capped.
- *
- * NOTE: Historical use of randomize_range, which this replaces, presumed that
- * @start was already page aligned.  We now align it regardless.
- *
- * Return: A page aligned address within [start, start + range).  On error,
- * @start is returned.
- */
-unsigned long
-randomize_page(unsigned long start, unsigned long range)
-{
-	if (!PAGE_ALIGNED(start)) {
-		range -= PAGE_ALIGN(start) - start;
-		start = PAGE_ALIGN(start);
-	}
-
-	if (start > ULONG_MAX - range)
-		range = ULONG_MAX - start;
-
-	range >>= PAGE_SHIFT;
-
-	if (range == 0)
-		return start;
-
-	return start + (get_random_long() % range << PAGE_SHIFT);
-}
-
-/* Interface for in-kernel drivers of true hardware RNGs.
- * Those devices may produce endless random bits and will be throttled
- * when our pool is full.
- */
-void add_hwgenerator_randomness(const char *buffer, size_t count,
-				size_t entropy)
-{
-	struct entropy_store *poolp = &input_pool;
-
-	if (unlikely(crng_init == 0)) {
-		crng_fast_load(buffer, count);
-		return;
-	}
-
-	/* Suspend writing if we're above the trickle threshold.
-	 * We'll be woken up again once below random_write_wakeup_thresh,
-	 * or when the calling thread is about to terminate.
-	 */
-	wait_event_freezable(random_write_wait, kthread_should_stop() ||
-			ENTROPY_BITS(&input_pool) <= random_write_wakeup_bits);
-	mix_pool_bytes(poolp, buffer, count);
-	credit_entropy_bits(poolp, entropy);
-}
-EXPORT_SYMBOL_GPL(add_hwgenerator_randomness);
+#endif	/* CONFIG_SYSCTL */
