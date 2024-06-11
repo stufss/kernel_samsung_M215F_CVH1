@@ -169,7 +169,6 @@ void nmi_panic(struct pt_regs *regs, const char *msg)
 }
 EXPORT_SYMBOL(nmi_panic);
 
-<<<<<<< HEAD
 void check_panic_on_warn(const char *origin)
 {
 	unsigned int limit;
