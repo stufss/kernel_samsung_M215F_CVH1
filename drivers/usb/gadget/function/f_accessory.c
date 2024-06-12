@@ -251,6 +251,8 @@ static struct usb_gadget_strings *acc_strings[] = {
 	NULL,
 };
 
+static struct acc_dev *_acc_dev;
+
 struct acc_dev_ref {
 	struct kref	kref;
 	struct acc_dev	*acc_dev;
@@ -1353,12 +1355,8 @@ static void acc_function_disable(struct usb_function *f)
 
 static int acc_setup(void)
 {
-	struct acc_dev_ref *ref = &_acc_dev_ref;
 	struct acc_dev *dev;
 	int ret;
-
-	if (kref_read(&ref->kref))
-		return -EBUSY;
 
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 	if (!dev)
@@ -1377,16 +1375,14 @@ static int acc_setup(void)
 
 	ret = misc_register(&acc_device);
 	if (ret)
-		goto err_zap_ptr;
+		goto err;
 
 	/* _acc_dev must be set before calling usb_gadget_register_driver */
 	_acc_dev = dev;
 
 	return 0;
 
-err_zap_ptr:
-	ref->acc_dev = NULL;
-err_free_dev:
+err:
 	kfree(dev);
 	pr_err("USB accessory gadget driver failed to initialize\n");
 	return ret;

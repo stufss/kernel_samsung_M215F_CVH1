@@ -1188,8 +1188,7 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 	dev->qmult = qmult;
 	snprintf(net->name, sizeof(net->name), "%s%%d", netname);
 
-	if (get_ether_addr(dev_addr, net->dev_addr)) {
-		net->addr_assign_type = NET_ADDR_RANDOM;
+	if (get_ether_addr(dev_addr, net->dev_addr))
 		dev_warn(&g->dev,
 			"using random %s ethernet address\n", "self");
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
@@ -1283,6 +1282,7 @@ int gether_register_netdev(struct net_device *net)
 {
 	struct eth_dev *dev;
 	struct usb_gadget *g;
+	struct sockaddr sa;
 	int status;
 
 	if (!net->dev.parent)
