@@ -67,6 +67,9 @@ obj-$(CONFIG_CRYPTO_ENGINE) += crypto_engine.o
 obj-$(CONFIG_CRYPTO_AKCIPHER2) += akcipher.o
 obj-$(CONFIG_CRYPTO_KPP2) += kpp.o
 
+obj-$(CONFIG_CRYPTO_BLAKE2B) += blake2b_generic.o
+obj-$(CONFIG_CRYPTO_BLAKE2S) += blake2s_generic.o
+
 dh_generic-y := dh.o
 dh_generic-y += dh_helper.o
 obj-$(CONFIG_CRYPTO_DH) += dh_generic.o
