@@ -540,7 +540,7 @@ endif
 ifeq ($(LLVM_IAS),0)
 CLANG_FLAGS	+= -no-integrated-as
 else
-CLANG_FLAGS	+= -integrated-as
+CLANG_FLAGS	+= -fintegrated-as
 LLVM_IAS 	:= 1
 endif
 CLANG_FLAGS     += -Werror=unknown-warning-option
