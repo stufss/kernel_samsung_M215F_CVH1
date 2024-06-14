@@ -724,13 +724,8 @@ static int ptrace_peek_siginfo(struct task_struct *child,
 
 	for (i = 0; i < arg.nr; ) {
 		siginfo_t info;
-<<<<<<< HEAD
-		unsigned long off = arg.off + i; 
-		bool found = false; 
-=======
 		unsigned long off = arg.off + i;
 		bool found = false;
->>>>>>> ASB-2019-07-05_4.14-q
 
 		spin_lock_irq(&child->sighand->siglock);
 		list_for_each_entry(q, &pending->list, list) {
