@@ -20,10 +20,10 @@ fi
 
 if [[ -z "$KSU" || "$KSU" = "0" ]]; then
 KSU=0
-export KSUSTAT=-
+export KSUSTAT=
 elif [ "$KSU" = "1" ]; then
 CONFIG_KSU=ksu.config
-export KSUSTAT=_KSU-
+export KSUSTAT=_KSU
 else
 echo "Error: Set KSU to 0 or 1 to build"
 exit 1
@@ -32,7 +32,7 @@ export KSU
 
 if [[ -z "$OLD" || "$OLD" = "0" ]]; then
 echo "NOT PATCHING tzdev!!"
-export OLST=
+export OLST=-
 elif [ "$OLD" = "1" ]; then
 echo "PATCHING tzdev!!"
 export OLST=_OLD-
@@ -41,13 +41,13 @@ cp startup_old.tzar drivers/misc/tzdev/startup.tzar
 git apply tzdev.patch
 fi
 
-if [[ -z "$CB" || "$CB" = "y" ]]; then
+if [[ -z "$1" || "$1" = "-c" ]]; then
 echo "Clean Build"
 rm -rf out
-elif [ "$CB" = "n" ]; then
+elif [ "$1" = "-d" ]; then
 echo "Dirty Build"
 else
-echo "Error: Set CB to y or n to build"
+echo "Error: Set $1 to -c or -d"
 exit 1
 fi
 
