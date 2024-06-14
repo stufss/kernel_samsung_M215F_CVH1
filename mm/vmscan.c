@@ -2471,14 +2471,15 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	unsigned long anon, file;
 	unsigned long ap, fp;
 	enum lru_list lru;
+
 #ifdef CONFIG_OPLUS_MM_HACKS
-	unsigned long totalswap = total_swap_pages;
+        unsigned long totalswap = total_swap_pages;
 #endif /*CONFIG_OPLUS_MM_HACKS*/
 
-	if (is_kanond(sc)) {
-		scan_balance = SCAN_ANON;
-		goto out;
-	}
+        if (is_kanond(sc)) {
+                scan_balance = SCAN_ANON;
+                goto out;
+        }
 
 #ifdef CONFIG_OPLUS_MM_HACKS
 	if (!current_is_kswapd())
@@ -2571,7 +2572,7 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	 * system is under heavy pressure.
 	 */
 	if (!IS_ENABLED(CONFIG_BALANCE_ANON_FILE_RECLAIM) &&
-	    !inactive_list_is_low(lruvec, true, memcg, sc, false) &&
+	    !inactive_list_is_low(lruvec, true, sc, false) &&
 	    lruvec_lru_size(lruvec, LRU_INACTIVE_FILE, sc->reclaim_idx) >> sc->priority) {
 		scan_balance = SCAN_FILE;
 		goto out;
