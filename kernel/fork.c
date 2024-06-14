@@ -2041,10 +2041,8 @@ static __latent_entropy struct task_struct *copy_process(
 	perf_event_fork(p);
 
 	trace_task_newtask(p, clone_flags);
-	uprobe_copy_process(p, clone_flags);
-
-	copy_oom_score_adj(clone_flags, p);
-
+	uprobe_copy_process(p, clone_flags);z
+	
 	return p;
 
 bad_fork_cancel_cgroup:
