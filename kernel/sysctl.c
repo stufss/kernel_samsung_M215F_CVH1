@@ -129,12 +129,12 @@ static unsigned long zero_ul;
 static unsigned long one_ul = 1;
 static unsigned long long_max = LONG_MAX;
 static int one_hundred = 100;
+#ifdef CONFIG_OPLUS_MM_HACKS
+static int two_hundred = 200;
+#endif /*CONFIG_OPLUS_MM_HACKS*/
 #ifdef CONFIG_INCREASE_MAXIMUM_SWAPPINESS
 static int max_swappiness = 300;
 #endif
-#ifdef CONFIG_OPLUS_MM_HACKS
-extern int direct_vm_swappiness;
-#endif /* CONFIG_OPLUS_MM_HACKS */
 static int one_thousand = 1000;
 #ifdef CONFIG_PRINTK
 static int ten_thousand = 10000;
@@ -1431,17 +1431,38 @@ static struct ctl_table vm_table[] = {
 	},
 #ifdef CONFIG_OPLUS_MM_HACKS
 	{
-		.procname	= "direct_swappiness",
-		.data		= &direct_vm_swappiness,
-		.maxlen 	= sizeof(direct_vm_swappiness),
+		.procname	= "vm_swappiness_threshold1",
+		.data		= &vm_swappiness_threshold1,
+		.maxlen		= sizeof(vm_swappiness_threshold1),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
-		.extra1 	= &zero,
-#ifdef CONFIG_INCREASE_MAXIMUM_SWAPPINESS
-		.extra2		= &max_swappiness,
-#else
-		.extra2		= &one_hundred,
-#endif
+		.extra1		= &zero,
+		.extra2		= &two_hundred,
+	},
+	{
+		.procname	= "vm_swappiness_threshold2",
+		.data		= &vm_swappiness_threshold2,
+		.maxlen		= sizeof(vm_swappiness_threshold2),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero,
+		.extra2		= &two_hundred,
+	},
+	{
+		.procname	= "swappiness_threshold1_size",
+		.data		= &swappiness_threshold1_size,
+		.maxlen		= sizeof(swappiness_threshold1_size),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero,
+	},
+	{
+		.procname	= "swappiness_threshold2_size",
+		.data		= &swappiness_threshold2_size,
+		.maxlen		= sizeof(swappiness_threshold2_size),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero,
 	},
 #endif /*CONFIG_OPLUS_MM_HACKS*/
 	{

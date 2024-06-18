@@ -176,10 +176,10 @@ static inline bool is_kanond(struct scan_control *sc)
  */
 int vm_swappiness = 60;
 #ifdef CONFIG_OPLUS_MM_HACKS
-/*
- * Direct reclaim swappiness, exptct 0 - 60. Higher means more swappy and slower.
- */
-int direct_vm_swappiness = 60;
+int vm_swappiness_threshold1 = 0;
+int vm_swappiness_threshold2 = 0;
+int swappiness_threshold1_size = 0;
+int swappiness_threshold2_size = 0;
 #endif /*CONFIG_OPLUS_MM_HACKS*/
 /*
  * The total number of pages which are beyond the high watermark within all
@@ -1836,10 +1836,6 @@ putback_inactive_pages(struct lruvec *lruvec, struct list_head *page_list)
  */
 static int current_may_throttle(void)
 {
-#ifdef CONFIG_OPLUS_MM_HACKS
-	if ((current->signal->oom_score_adj < 0))
-		return 0;
-#endif /*CONFIG_OPLUS_MM_HACKS*/
 	return !(current->flags & PF_LESS_THROTTLE) ||
 		current->backing_dev_info == NULL ||
 		bdi_write_congested(current->backing_dev_info);
@@ -2249,13 +2245,8 @@ static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
 		inactive_ratio = 0;
 	} else {
 		gb = (inactive + active) >> (30 - PAGE_SHIFT);
-#ifdef CONFIG_OPLUS_MM_HACKS
-		if (file && gb)
-			inactive_ratio = min(2UL, int_sqrt(10 * gb));
-#else
 		if (gb)
 			inactive_ratio = int_sqrt(10 * gb);
-#endif /*CONFIG_OPLUS_MM_HACKS*/
 		else
 			inactive_ratio = 1;
 	}
@@ -2481,8 +2472,21 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	}
 
 #ifdef CONFIG_OPLUS_MM_HACKS
-	if (!current_is_kswapd())
-		swappiness = direct_vm_swappiness;
+	if (current_is_kswapd()) {
+		unsigned long nr_file_pages =
+			global_node_page_state(NR_ACTIVE_FILE) +
+			global_node_page_state(NR_INACTIVE_FILE);
+
+		if (swappiness_threshold1_size && vm_swappiness_threshold1 &&
+				nr_file_pages >= (swappiness_threshold1_size << 8) &&
+				swappiness > vm_swappiness_threshold1) {
+			swappiness = vm_swappiness_threshold1;
+		} else if (swappiness_threshold2_size && vm_swappiness_threshold2 &&
+				nr_file_pages >= (swappiness_threshold2_size << 8) &&
+				swappiness > vm_swappiness_threshold2) {
+			swappiness = vm_swappiness_threshold2;
+		}
+	}
 	if (!sc->may_swap || (mem_cgroup_get_nr_swap_pages(memcg) <= totalswap>>6)) {
 #else
 	/* If we have no swap space, do not bother scanning anon pages. */
@@ -2571,7 +2575,7 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	 * system is under heavy pressure.
 	 */
 	if (!IS_ENABLED(CONFIG_BALANCE_ANON_FILE_RECLAIM) &&
-	    !inactive_list_is_low(lruvec, true, memcg, sc, false) &&
+	    !inactive_list_is_low(lruvec, true, sc, false) &&
 	    lruvec_lru_size(lruvec, LRU_INACTIVE_FILE, sc->reclaim_idx) >> sc->priority) {
 		scan_balance = SCAN_FILE;
 		goto out;

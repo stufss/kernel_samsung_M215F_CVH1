@@ -372,6 +372,13 @@ extern int vm_swappiness;
 extern int remove_mapping(struct address_space *mapping, struct page *page);
 extern unsigned long vm_total_pages;
 
+#ifdef CONFIG_OPLUS_MM_HACKS
+extern int vm_swappiness_threshold1;
+extern int vm_swappiness_threshold2;
+extern int swappiness_threshold1_size;
+extern int swappiness_threshold2_size;
+#endif /*CONFIG_OPLUS_MM_HACKS*/
+
 #ifdef CONFIG_NUMA
 extern int node_reclaim_mode;
 extern int sysctl_min_unmapped_ratio;
