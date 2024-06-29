@@ -1,4 +1,4 @@
-### Kernel Source For `SM-M215F & SM-M315F`
+### Kernel Source For `M21/M31/M31s/F41`
 
 **Based on [`Naz v1`](https://github.com/naz664/M215F-S/tree/Naz-old)** 
 
@@ -29,6 +29,11 @@ $ DEVICE=m31 KSU=0 OLD=1 ./build.sh -d
 Toolchain is synced automatically
 
 Flashable zip is localted in Anykernel3/N_KERNEL*.zip
+
+### **Note**
+1. F41 uses older tee, so only build with `OLD=1`.
+2. By default the script builds with `OLD=0` which uses the new tzdev, might not boot for you.
+3. AVB needs to be disabled to boot these kernels i.e. nuked from vendor and boot fstabs.
 
 ### **Credits** *(kanged everything from these guys)*
 
