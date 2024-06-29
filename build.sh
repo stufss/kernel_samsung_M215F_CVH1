@@ -79,29 +79,12 @@ rm -rf AnyKernel3/Image
 rm -rf AnyKernel3/config
 echo "  done"
 echo ""
+
+[ ! -e "out/arch/arm64/boot/Image" ] && \
+echo "  ERROR : image binary not found in any of the specified locations , fix compile!" && \
+exit 1
+
 echo "  Copying Stuff"
-
-# Define potential locations for the image binary
-locations=(
-  "$PWD/arch/arm64/boot"
-  "$PWD/out/arch/arm64/boot"
-)
-
-# Check each location sequentially
-found=false
-for location in "${locations[@]}"; do
-  if test -f "$location/Image"; then
-    found=true
-    break # Stop iterating after finding the binary
-  fi
-done
-
-# Handle the case where image binary wasn't found
-if ! $found; then
-  echo "  ERROR : image binary not found in any of the specified locations , fix compile!"
-  exit 1
-fi
-
 cp -r out/arch/arm64/boot/Image AnyKernel3/Image
 cp -r out/.config AnyKernel3/config
 echo "  done"
