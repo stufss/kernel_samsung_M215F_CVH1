@@ -32,7 +32,7 @@ Flashable zip is localted in Anykernel3/N_KERNEL*.zip
 
 ### **Credits** *(kanged everything from these guys)*
 
-- **[`@naz664`](https://github.com/naz664)**
-- **[`@LMAO-armv8`](https://github.com/LMAO-armv8)**
-- **[`@TenSeventy7`](https://github.com/TenSeventy7)**
-- **[`@Royna2544`](https://github.com/Royna2544)**
+- **[`@naz664`](https://github.com/naz664)** (base tree)
+- **[`@LMAO-armv8`](https://github.com/LMAO-armv8)** (upstreamed kernel)
+- **[`@TenSeventy7`](https://github.com/TenSeventy7)** (vdso32, minor optimizations)
+- **[`@Royna2544`](https://github.com/Royna2544)** (incfs, binderfs, lto fixes)
