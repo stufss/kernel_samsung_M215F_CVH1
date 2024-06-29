@@ -9,8 +9,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        device: [m21, m31]
-        ksu: [1]
+        device: [m21, m31, m31s, f41]
+        ksu: [0, 1]
         old: [0, 1]
     name: "🚧 Build for ${{matrix.device}} KSU=${{matrix.ksu}} OLD=${{matrix.old}}"
 
