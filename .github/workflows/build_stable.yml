@@ -38,6 +38,12 @@ jobs:
         run: |
           DEVICE=${{matrix.device}} KSU=${{matrix.ksu}} OLD=${{matrix.old}} ./build.sh
 
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: N_kernel-${{matrix.device}}_Clang_18
+          path: AnyKernel3/N*.zip
+
       - name: Upload to Telegram
         uses: appleboy/telegram-action@master
         with:
