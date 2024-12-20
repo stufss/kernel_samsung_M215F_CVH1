@@ -10,7 +10,9 @@
 #include <linux/proc_fs.h>
 #include <linux/f2fs_fs.h>
 #include <linux/seq_file.h>
+#ifdef CONFIG_DEBUG_FS
 #include <linux/statfs.h>
+#endif
 #include <linux/nls.h>
 
 #include "f2fs.h"
@@ -105,6 +107,7 @@ static ssize_t lifetime_write_kbytes_show(struct f2fs_attr *a,
 			BD_PART_WRITTEN(sbi)));
 }
 
+#ifdef CONFIG_DEBUG_FS
 static ssize_t sec_fs_stat_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
@@ -139,6 +142,7 @@ errout:
 		"F_BLOCKS", 0, "F_BFREE", 0, "F_SFREE", 0, "F_FILES", 0,
 		"F_FFREE", 0, "F_FUSED", 0, "F_NUSED", 0, "F_VER", SEC_BIGDATA_VERSION);
 }
+#endif /* CONFIG_DEBUG_FS */
 
 static ssize_t features_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
@@ -190,6 +194,8 @@ static ssize_t current_reserved_blocks_show(struct f2fs_attr *a,
 }
 
 /* Copy from debug.c stat_show */
+
+#ifdef CONFIG_DEBUG_FS
 static ssize_t f2fs_sec_stats_show(struct f2fs_sb_info *sbi, char *buf)
 {
 	struct f2fs_stat_info *si = sbi->stat_info;
@@ -368,6 +374,7 @@ static ssize_t f2fs_sec_stats_show(struct f2fs_sb_info *sbi, char *buf)
 
 	return len;
 }
+#endif /* CONFIG_DEBUG_FS */
 
 static void __sec_bigdata_init_value(struct f2fs_sb_info *sbi,
 		const char *attr_name)
@@ -572,8 +579,10 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 		}
 
 		return len;
+#ifdef CONFIG_DEBUG_FS
 	} else if (!strcmp(a->attr.name, "sec_stats")) {
 		return f2fs_sec_stats_show(sbi, buf);
+#endif
 	}
 
 	ui = (unsigned int *)(ptr + a->offset);
@@ -880,7 +889,9 @@ F2FS_RW_ATTR(FAULT_INFO_TYPE, f2fs_fault_info, inject_type, inject_type);
 #endif
 F2FS_RW_ATTR_640(F2FS_SBI, f2fs_sb_info, sec_gc_stat, sec_stat);
 F2FS_RW_ATTR_640(F2FS_SBI, f2fs_sb_info, sec_io_stat, sec_stat);
+#ifdef CONFIG_DEBUG_FS
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_stats, stat_info);
+#endif
 F2FS_RW_ATTR_640(F2FS_SBI, f2fs_sb_info, sec_fsck_stat, sec_fsck_stat);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_part_best_extents, s_sec_part_best_extents);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_part_current_extents, s_sec_part_current_extents);
@@ -893,7 +904,9 @@ F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_fua_mode, s_sec_cond_fua_mode);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_hqm_preserve, sec_hqm_preserve);
 F2FS_GENERAL_RO_ATTR(dirty_segments);
 F2FS_GENERAL_RO_ATTR(lifetime_write_kbytes);
+#ifdef CONFIG_DEBUG_FS
 F2FS_GENERAL_RO_ATTR(sec_fs_stat);
+#endif
 F2FS_GENERAL_RO_ATTR(features);
 F2FS_GENERAL_RO_ATTR(current_reserved_blocks);
 F2FS_GENERAL_RO_ATTR(unusable);
@@ -949,7 +962,9 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(extension_list),
 	ATTR_LIST(sec_gc_stat),
 	ATTR_LIST(sec_io_stat),
+#ifdef CONFIG_DEBUG_FS
 	ATTR_LIST(sec_stats),
+#endif
 	ATTR_LIST(sec_fsck_stat),
 	ATTR_LIST(sec_part_best_extents),
 	ATTR_LIST(sec_part_current_extents),
@@ -967,7 +982,9 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(dirty_segments),
 	ATTR_LIST(unusable),
 	ATTR_LIST(lifetime_write_kbytes),
+#ifdef CONFIG_DEBUG_FS
 	ATTR_LIST(sec_fs_stat),
+#endif
 	ATTR_LIST(features),
 	ATTR_LIST(reserved_blocks),
 	ATTR_LIST(current_reserved_blocks),
