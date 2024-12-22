@@ -8,16 +8,13 @@ DEVICE   : SM-M215F
 Support  : Oneui | GSI
 
 Selinux  : Enforcing
-Version  : v0.5
+Version  : v0.7
 Baseband : M215FDDU3CVH1
 
 Compiled With Clang 18
 Based on Naz v1
 
-NOTE 1: You need to update libGLES in vendor
-        (if you already did this ignore)
-
-NOTE 2: Make Sure to Format Data if the phone 
+NOTE :  Make Sure to Format Data if the phone
         bootloops and if it still bootloops 
         after formatting then flash dm_vertity 
         or multidisabler
