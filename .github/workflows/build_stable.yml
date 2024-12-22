@@ -1,7 +1,9 @@
 name: build_stable (KSU)
 
 on:
-
+  push:
+    tags:
+      - '*'
   workflow_dispatch:
 jobs:
   build:
@@ -41,7 +43,7 @@ jobs:
       - name: Upload kernel
         uses: actions/upload-artifact@v4
         with:
-          name: N_kernel-${{matrix.device}}_Clang_18
+          name: N_kernel-${{matrix.device}}_${{matrix.old}}_Clang_18
           path: AnyKernel3/N*.zip
 
       - name: Upload to Telegram
