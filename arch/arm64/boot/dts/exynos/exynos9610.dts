@@ -1739,6 +1739,7 @@
 
 	coresight@16000000 {
 		compatible = "exynos,coresight";
+		status = "disabled";
 		base = <0x16000000>;
 		sj-offset = <0x6000>;
 
